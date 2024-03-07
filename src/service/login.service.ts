@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { loginTemplate } from '../core/utils/template';
+import { loginTemplate } from '../core/utils/template.utils';
 import { AuthenticationProvider } from '../core/auth/abstract/authenticationProvider';
 import { Authenticator } from '../core/auth/abstract/authenticator';
 import {

@@ -22,7 +22,7 @@ export class Provider {
   }
 
   sessionAuthentication(): SessionAuthenticationProvider {
-    return new SessionAuthenticationProvider(AuthenticateType.FORM_LOGIN);
+    return new SessionAuthenticationProvider(AuthenticateType.SESSION);
   }
 
   basicAuthentication(): BasicWebAuthenticationProvider {

@@ -59,5 +59,5 @@ export enum AuthenticateType {
   BASIC = 'Basic',
   DIGEST = 'Digest',
   BEARER = 'Bearer',
-  FORM_LOGIN = 'FORM_LOGIN',
+  SESSION = 'Session',
 }

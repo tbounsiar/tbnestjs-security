@@ -1,4 +1,4 @@
-import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 
 /**
  * Interface to implement authentication error handling
@@ -7,10 +7,10 @@ export abstract class AuthErrorHandling {
   /**
    * Handle forbidden http error
    */
-  abstract forbidden(): ForbiddenException;
+  abstract forbidden(context: ExecutionContext): ForbiddenException;
 
   /**
    * Handle unauthorized http error
    */
-  abstract unauthorized(): UnauthorizedException;
+  abstract unauthorized(context: ExecutionContext): UnauthorizedException;
 }

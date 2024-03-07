@@ -4,14 +4,14 @@ import { AuthenticateType } from '../abstract/authenticationProvider';
 describe('SessionAuthenticationProvider Test', () => {
 
   test('No Session Configuration', () => {
-    const authenticationProvider = new SessionAuthenticationProvider(AuthenticateType.FORM_LOGIN);
+    const authenticationProvider = new SessionAuthenticationProvider(AuthenticateType.SESSION);
     const request = {};
     expect(() => authenticationProvider.getAuthentication(request)).toThrow(sessionAndFormMessage);
     expect(() => authenticationProvider.setAuthentication(request, null)).toThrow(sessionAndFormMessage);
   });
 
   test('Session Logout', () => {
-    const authenticationProvider = new SessionAuthenticationProvider(AuthenticateType.FORM_LOGIN);
+    const authenticationProvider = new SessionAuthenticationProvider(AuthenticateType.SESSION);
     const request = { session: { authentication: null } };
     authenticationProvider.setAuthentication(request, null);
     expect(request.session.authentication).toBeUndefined();

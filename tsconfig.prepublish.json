@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "target": "es2017",
+    "module": "commonjs",
+    "lib": [
+      "es2017",
+      "es7",
+      "es6"
+    ],
+    "declaration": true,
+    "outDir": "./publish/dist",
+    "rootDir": "./src",
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "stripInternal": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "jest.config.ts",
+    "./src/**/*.spec.ts"
+  ]
+}

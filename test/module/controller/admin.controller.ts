@@ -1,16 +1,11 @@
 import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { PreAuthorize } from '../../../src/guard/decorator/preAuthorize.decorator';
-import { Authentication } from '../../../src/core/auth/abstract/authenticationProvider';
-import { RequestAuthentication } from '../../../src';
 
 @Controller('/admin')
 export class AdminController {
 
-  constructor() {
-  }
-
   @Get('/dashboard')
-  dashboard(@Authentication() authentication: RequestAuthentication): string {
+  dashboard(): string {
     return 'Welcome Dashboard!';
   }
 

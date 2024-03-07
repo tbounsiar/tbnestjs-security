@@ -1,4 +1,4 @@
-import { base64Decode } from '../../utils/crypto-utils';
+import { base64Decode } from '../../utils/crypto.utils';
 import { WebAuthenticationProvider } from './webAuthenticationProvider';
 import { Authentication } from '../abstract/authentication';
 import { AuthenticationBuilder } from '../authenticationBuilder';

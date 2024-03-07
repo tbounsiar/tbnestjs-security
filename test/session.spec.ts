@@ -1,248 +1,272 @@
-import { INestApplication } from '@nestjs/common';
-import { AuthorizeRequests, MemoryAuthentication, RequestMatcher, SecurityConfig, SecurityModule } from '../src';
-import { Test, TestingModule } from '@nestjs/testing';
-import * as request from 'supertest';
-import * as session from 'express-session';
-import * as secureSession from '@fastify/secure-session';
-import { loginTemplate } from '../src/core/utils/template';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { FormLogin } from '../src/core/auth/impl/sessionAuthenticationProvider';
+import { loginTemplate } from '../src/core/utils/template.utils';
+import { FormLogin, SessionAuthenticationProvider } from '../src/core/auth/impl/sessionAuthenticationProvider';
 // @ts-ignore
-import { TestModule } from './core/test.module';
+import { Context, doTest } from './core/app.test';
+import { buildApp, Form, user } from './core/app.config';
+import { AuthenticateType } from '../src/core/auth/abstract/authenticationProvider';
+import { createLoginController } from '../src/controller/login.controller';
+import { LoginService } from '../src/service/login.service';
+import { Controller, Get, HttpCode, Post } from '@nestjs/common';
 
-describe('Security Session Authentication Test', () => {
+describe('Session Authentication', () => {
 
-  let app: INestApplication;
-  const builder = SecurityConfig.builder();
-  const admin = ['admin', 'admin'];
-  const user = ['user', 'user'];
-  const superuser = ['superuser', 'superuser'];
+  const context: Context = {
+    application: undefined,
+    securityConfig: undefined,
+  };
 
-  function before(form?: { page: string, disableDefault?: boolean, disableLoginService?: boolean }, fastify = false) {
+  function set(form?: Form, fastify = false, controllers?: any[]) {
 
     beforeEach(async () => {
-      builder
-        .httpSecurity()
-        .authorize(
-          AuthorizeRequests.builder().requestMatcher(
-            RequestMatcher.builder()
-              .requestMatcher('/admin/(.*)')
-              .hasAnyRoles('ADMIN'),
-          ),
-        );
-
-      const sessionAuthentication = builder
-        .provide()
-        .sessionAuthentication();
-      if (form) {
-        sessionAuthentication.formLogin(
-          FormLogin.new()
-            .loginPage(form.page),
-        );
-        if (form.disableDefault) {
-          sessionAuthentication.formLogin().disableDefault();
-        }
-        if (form.disableLoginService) {
-          sessionAuthentication.formLogin().disableLoginService();
-        }
-      }
-
-      builder
-        .authenticationBuilder()
-        .authenticator(
-          builder
-            .provide()
-            .inMemoryAuthenticator()
-            .addUser(
-              MemoryAuthentication.with(admin[0], admin[1])
-                .withRoles('ADMIN'),
-            )
-            .addUser(
-              MemoryAuthentication.with(user[0], user[1])
-                .withRoles('USER'),
-            )
-            .addUser(
-              MemoryAuthentication.with(superuser[0], superuser[1])
-                .withRoles('USER')
-                .withAuthorities('CREATE'),
-            ),
-        )
-        .authenticationProvider(
-          sessionAuthentication,
-        );
-
-      const moduleFixture: TestingModule = await Test.createTestingModule({
-        imports: [TestModule, SecurityModule.forRoot(builder.build())],
-      }).compile();
-
-      if (fastify) {
-        app = moduleFixture.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
-        await (app as NestFastifyApplication).register(secureSession, {
-          secret: 'averylogphrasebiggerthanthirtytwochars',
-          salt: 'mq9hDxBVDbspDR6n',
-          sessionName: 'session',
-          cookieName: 'session.id',
-        });
-        await app.init();
-        await app.getHttpAdapter().getInstance().ready();
-      } else {
-        app = moduleFixture.createNestApplication();
-        app.use(
-          session({
-            secret: 'my-secret',
-            resave: false,
-            saveUninitialized: false,
-            name: 'session.id',
-          }),
-        );
-        await app.init();
-      }
+      await buildApp(context, {
+        secured: true,
+        type: AuthenticateType.SESSION,
+        fastify,
+        options: {
+          form,
+        },
+        controllers,
+      });
     });
 
-    if (fastify) {
-      afterEach(async () => {
-        await app.close();
-      });
-    }
+    afterEach(async () => {
+      await context.application.close();
+    });
   }
 
   describe('Test FormLogin', () => {
 
-    before();
+    set();
 
-    test('Should Redirect To FormLogin', (done) => {
-      request(app.getHttpServer())
-        .get('/')
-        .end((error, response) => {
-          if (error) {
-            return done(error);
-          }
-          expect(response.redirect);
-          expect(response.header.location).toEqual('/page/login?from=/');
-          done();
-        });
-    });
+    doTest(context, {
+      url: '/',
+    }, {
+      status: 302,
+      headers: {
+        location: '/page/login?from=/',
+      },
+    }, 'Redirect To FormLogin');
 
-    test('Test GET Default Login Page', (done) => {
-      request(app.getHttpServer())
-        .get(FormLogin.DEFAULT_LOGIN_PAGE)
-        .end((error, response) => {
-          if (error) {
-            return done(error);
-          }
-          expect(response.ok);
-          expect(response.headers['content-type']).toEqual('text/html; charset=utf-8');
-          expect(response.text).toEqual(loginTemplate(FormLogin.DEFAULT_LOGIN_URL));
-          done();
-        });
-    });
+    doTest(context, {
+      url: FormLogin.DEFAULT_LOGIN_PAGE,
+    }, {
+      headers: {
+        ['content-type']: 'text/html; charset=utf-8',
+      },
+      text: loginTemplate(FormLogin.DEFAULT_LOGIN_URL),
+    }, 'Default Login Page');
 
-    test('Test Login Request', (done) => {
-      const req = request(app.getHttpServer());
-      req
-        .post(FormLogin.DEFAULT_LOGIN_URL)
-        .type('form')
-        .send({
-          login: user[0],
-          password: user[1],
-        })
-        .end((error, response) => {
-          if (error) {
-            return done(error);
-          }
-          expect(response.redirect);
-          expect(response.header.location).toEqual('/');
-          const cookie = response.get('Set-Cookie').find(c => c.startsWith('session.id='));
-          expect(cookie).toBeTruthy();
-          req.get('/')
-            .set('Cookie', [cookie])
-            .end((err, res) => {
-              if (err) {
-                return done(err);
-              }
-              expect(res.ok);
-              expect(res.text).toEqual('Welcome Home!');
-              done();
-            });
-        });
-    });
+    doTest(context, {
+      url: FormLogin.DEFAULT_LOGIN_URL,
+      method: 'post',
+      type: 'form',
+      send: {
+        login: user[0],
+        password: user[1],
+      },
+    }, {
+      status: 302,
+      headers: {
+        location: '/',
+      },
+      setCookies: [{ key: 'session.id', reset: true }],
+      retest: {
+        input: {
+          url: '/',
+        },
+        output: {
+          text: 'Welcome Home!',
+        },
+      },
+    }, 'Login Request');
   });
 
   describe('Test Custom FormLogin url', () => {
 
     let page = '/the/login/page';
-    before({ page });
+    set({ pageUrl: page });
 
-    test('Default Login Page URL Not FOUND', (done) => {
-      request(app.getHttpServer())
-        .get(FormLogin.DEFAULT_LOGIN_PAGE)
-        .end((error, response) => {
-          if (error) {
-            return done(error);
-          }
-          expect(response.notFound);
-          done();
-        });
-    });
+    doTest(context, {
+      url: FormLogin.DEFAULT_LOGIN_PAGE,
+    }, {
+      status: 404,
+    }, 'Default Login Page URL Not Found');
 
-    test('Custom Login Page URL Found', (done) => {
-      request(app.getHttpServer())
-        .get(page)
-        .end((error, response) => {
-          if (error) {
-            return done(error);
-          }
-          expect(response.ok);
-          done();
-        });
-    });
+    doTest(context, {
+      url: page,
+    }, {}, 'Custom Login Page URL Found');
 
-    test('Should Redirect To Page', (done) => {
-      request(app.getHttpServer())
-        .get('/')
-        .end((error, response) => {
-          if (error) {
-            return done(error);
-          }
-          expect(response.redirect);
-          expect(response.header.location).toEqual(`${page}?from=/`);
-          done();
-        });
-    });
+    doTest(context, {
+      url: '/',
+    }, {
+      status: 302,
+      headers: {
+        location: `${page}?from=/`,
+      },
+    }, 'Should Redirect To Custom Page');
   });
 
   describe('With Fastify', () => {
 
-    before(undefined, true);
+    const form: Form = {
+      pageUrl: '/the/page',
+      loginUrl: '/the/login',
+    };
 
-    test('Test Login Request', (done) => {
-      const req = request(app.getHttpServer());
-      req
-        .post(FormLogin.DEFAULT_LOGIN_URL)
-        .type('form')
-        .send({
-          login: user[0],
-          password: user[1],
-        })
-        .end((error, response) => {
-          if (error) {
-            return done(error);
+    set(form, true);
+
+    doTest(context, {
+      url: '/',
+    }, {
+      status: 302,
+      headers: {
+        location: `${form.pageUrl}?from=/`,
+      },
+    }, 'Should Redirect To Custom Page');
+
+    doTest(context, {
+      url: form.loginUrl,
+      method: 'post',
+      type: 'form',
+      send: {
+        login: user[0],
+        password: user[1],
+      },
+    }, {
+      status: 302,
+      headers: {
+        location: '/',
+      },
+      setCookies: [{ key: 'session.id', reset: true }],
+      retest: {
+        input: {
+          url: '/',
+        },
+        output: {
+          text: 'Welcome Home!',
+        },
+      },
+    }, 'Login Request');
+  });
+
+  describe('Disable defaults', () => {
+
+    const form: Form = {
+      pageUrl: '/the/page',
+      loginUrl: '/the/login',
+      disableDefault: true,
+      disableLoginService: true,
+    };
+
+    function init(context: Context) {
+      const formLogin = (context.securityConfig.authenticationBuilder().authenticationProvider() as SessionAuthenticationProvider).formLogin();
+      context.data = {
+        LoginController: createLoginController(formLogin),
+      };
+    }
+
+    set(form, true);
+
+    doTest(context, {
+      url: form.pageUrl,
+    }, {
+      status: 404,
+      check: () => {
+        const controller = () => {
+          try {
+            context.application.get(context.data.LoginController);
+          } catch (error) {
+            throw new Error('Nest could not find LoginController element');
           }
-          expect(response.redirect);
-          expect(response.header.location).toEqual('/');
-          const cookie = response.get('Set-Cookie').find(c => c.startsWith('session.id='));
-          expect(cookie).toBeTruthy();
-          req.get('/')
-            .set('Cookie', [cookie])
-            .end((err, res) => {
-              if (err) {
-                return done(err);
-              }
-              expect(res.ok);
-              expect(res.text).toEqual('Welcome Home!');
-              done();
-            });
-        });
-    });
+        };
+        const service = () => {
+          try {
+            context.application.get(LoginService);
+          } catch (error) {
+            throw new Error('Nest could not find LoginService element');
+          }
+        };
+
+        expect(() => controller()).toThrow('Nest could not find LoginController element');
+        expect(() => service()).toThrow('Nest could not find LoginService element');
+
+      },
+    }, 'Default Login Page And Service', init);
+  });
+
+  describe('Set Custom Login', () => {
+
+    const form: Form = {
+      pageUrl: '/the/page',
+      loginUrl: '/the/login',
+      logoutUrl: '/the/logout',
+      disableDefault: true,
+      disableLoginService: true,
+    };
+
+    const loginService = {
+      page: jest.fn(),
+      login: jest.fn(),
+      logout: jest.fn(),
+    };
+
+    const CustomLoginController = (() => {
+      @Controller()
+      class LoginController {
+
+        @Get(form.pageUrl)
+        page() {
+          loginService.page();
+        }
+
+        @Post(form.loginUrl)
+        @HttpCode(200)
+        login() {
+          loginService.login();
+        }
+
+        @Post(form.logoutUrl)
+        @HttpCode(200)
+        logout() {
+          loginService.logout();
+        }
+      }
+
+      return LoginController;
+    })();
+
+    set(form, true, [CustomLoginController]);
+
+    doTest(context, {
+      url: form.pageUrl,
+    }, {
+      check: (context) => {
+        const controller = context.application.get(CustomLoginController);
+        expect(controller).toBeTruthy();
+        expect(loginService.page).toHaveBeenCalled();
+      },
+    }, 'Default Login Page');
+
+    doTest(context, {
+      url: form.loginUrl,
+      method: 'post',
+    }, {
+      check: (context) => {
+        const controller = context.application.get(CustomLoginController);
+        expect(controller).toBeTruthy();
+        expect(loginService.login).toHaveBeenCalled();
+      },
+    }, 'Default Login URL');
+
+    doTest(context, {
+      url: form.logoutUrl,
+      method: 'post',
+    }, {
+      check: (context) => {
+        const controller = context.application.get(CustomLoginController);
+        expect(controller).toBeTruthy();
+        expect(loginService.logout).toHaveBeenCalled();
+      },
+    }, 'Default Logout URL');
   });
 });

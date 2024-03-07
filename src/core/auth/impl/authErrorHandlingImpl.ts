@@ -1,15 +1,15 @@
-import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { AuthErrorHandling } from '../abstract/authErrorHandling';
 
 /**
  * @internal
  */
 export class AuthErrorHandlingImpl extends AuthErrorHandling {
-  forbidden(message?: string): ForbiddenException {
-    return new ForbiddenException(message);
+  forbidden(_: ExecutionContext): ForbiddenException {
+    return new ForbiddenException();
   }
 
-  unauthorized(message?: string): UnauthorizedException {
-    return new UnauthorizedException(message);
+  unauthorized(_: ExecutionContext): UnauthorizedException {
+    return new UnauthorizedException();
   }
 }

@@ -1,6 +1,13 @@
-import { CanActivate, ExecutionContext, Injectable, RequestMethod, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext, ForbiddenException,
+  Injectable, Logger,
+  OnModuleInit,
+  RequestMethod,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { Reflector } from '@nestjs/core';
+import { ModuleRef, Reflector } from '@nestjs/core';
 import { getExpression, PreAuthorize } from './decorator/preAuthorize.decorator';
 import { AuthenticateType, AuthenticationProvider } from '../core/auth/abstract/authenticationProvider';
 import { HttpSecurity } from '../core/http/httpSecurity';
@@ -8,35 +15,59 @@ import { AuthErrorHandling } from '../core/auth/abstract/authErrorHandling';
 import { FormLogin, SessionAuthenticationProvider } from '../core/auth/impl/sessionAuthenticationProvider';
 import { RequestMatcher } from '../core/http/requestMatcher';
 import { WWWAuthenticationProvider } from '../core/auth/impl/wwwAuthenticationProvider';
-import { pathToRegex } from '../core/utils/utils';
+import { pathToRegex } from '../core/utils/regex.utils';
+import { CsrfService } from '../core/http/csrf.service';
 
 /**
  * @internal
  */
 @Injectable()
-export class SecurityGuard implements CanActivate {
+export class SecurityGuard implements CanActivate, OnModuleInit {
 
-  private readonly loginRegex: RegExp;
+  /**
+   * @internal
+   * @private
+   */
+  private readonly logger = new Logger(SecurityGuard.name);
+
+  private loginRegex: RegExp;
+  private authenticationProvider: AuthenticationProvider;
+  private csrfService: CsrfService;
 
   constructor(
-    private reflector: Reflector,
-    private authenticationProvider: AuthenticationProvider,
-    private httpSecurity: HttpSecurity,
-    private authErrorHandling: AuthErrorHandling,
+    private readonly moduleRef: ModuleRef,
+    private readonly reflector: Reflector,
+    private readonly httpSecurity: HttpSecurity,
+    private readonly authErrorHandling: AuthErrorHandling,
   ) {
-    if (
-      this.authenticationProvider.authenticateType() ===
-      AuthenticateType.FORM_LOGIN
-    ) {
-      const formLogin = (
-        this.authenticationProvider as SessionAuthenticationProvider
-      ).formLogin();
-      const loginUrls = [
-        new RegExp(formLogin.loginPage() || FormLogin.DEFAULT_LOGIN_PAGE).source,
-        new RegExp(formLogin.loginUrl() || FormLogin.DEFAULT_LOGIN_URL).source,
-        new RegExp(formLogin.logoutUrl() || FormLogin.DEFAULT_LOGOUT_URL).source,
-      ];
-      this.loginRegex = pathToRegex(...loginUrls);
+  }
+
+  onModuleInit() {
+    try {
+      this.csrfService = this.moduleRef.get(CsrfService, { strict: false });
+    } catch (error) {
+    }
+    try {
+      this.authenticationProvider = this.moduleRef.get(AuthenticationProvider, { strict: false });
+      if (
+        this.authenticationProvider && this.authenticationProvider.authenticateType() ===
+        AuthenticateType.SESSION
+      ) {
+        if (!this.csrfService) {
+          this.logger.warn('You are using authentication session but CSRF protection is not enabled!');
+        }
+        const formLogin = (
+          this.authenticationProvider as SessionAuthenticationProvider
+        ).formLogin();
+        const loginUrls = [
+          new RegExp(formLogin.loginPage() || FormLogin.DEFAULT_LOGIN_PAGE).source,
+          new RegExp(formLogin.loginUrl() || FormLogin.DEFAULT_LOGIN_URL).source,
+          new RegExp(formLogin.logoutUrl() || FormLogin.DEFAULT_LOGOUT_URL).source,
+        ];
+        this.loginRegex = pathToRegex(...loginUrls);
+      }
+    } catch (error) {
+
     }
   }
 
@@ -44,17 +75,20 @@ export class SecurityGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
 
-    if (
-      this.authenticationProvider.authenticateType() ===
-      AuthenticateType.FORM_LOGIN &&
-      this.isLoginForm(context)
-    ) {
-      return true;
+    if (this.authenticationProvider) {
+      if (
+        this.authenticationProvider.authenticateType() ===
+        AuthenticateType.SESSION &&
+        this.isLoginForm(context)
+      ) {
+        return true;
+      }
+      if (this.validateMatcher(context)) {
+        return true;
+      }
+      return false;
     }
-    if (this.validateMatcher(context)) {
-      return true;
-    }
-    return false;
+    throw this.authErrorHandling.unauthorized(context);
   }
 
   private isLoginForm(context: ExecutionContext) {
@@ -95,6 +129,7 @@ export class SecurityGuard implements CanActivate {
 
   private validatePermission(context: ExecutionContext, expression?: string) {
 
+
     let errorHandler = null;
     let redirect = null;
     const authenticateType = this.authenticationProvider.authenticateType();
@@ -109,10 +144,9 @@ export class SecurityGuard implements CanActivate {
           ).getAskHeader(error);
           const response = context.switchToHttp().getResponse();
           response.header(key, value);
-          // response.status(401).send(this.authErrorHandling.unauthorized().getResponse());
         };
         break;
-      case AuthenticateType.FORM_LOGIN:
+      case AuthenticateType.SESSION:
         const formLogin = (
           this.authenticationProvider as SessionAuthenticationProvider
         ).formLogin();
@@ -139,6 +173,9 @@ export class SecurityGuard implements CanActivate {
         // @ref *
         throw new UnauthorizedException();
       }
+      if (this.csrfService && !this.csrfService.check(request)) {
+        throw new ForbiddenException('CSRF token does not match');
+      }
       if (!expression || eval(expression)) {
         return true;
       }
@@ -148,9 +185,9 @@ export class SecurityGuard implements CanActivate {
       if (errorHandler) {
         errorHandler(isUnauthorizedException ? undefined : error);
       }
-      throw isUnauthorizedException ? error : this.authErrorHandling.unauthorized();
+      throw isUnauthorizedException ? error : this.authErrorHandling.unauthorized(context);
     }
-    throw this.authErrorHandling.forbidden();
+    throw this.authErrorHandling.forbidden(context);
   }
 
   private getDecoratorExpression(context: ExecutionContext): string {

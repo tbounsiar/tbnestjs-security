@@ -42,7 +42,7 @@ export class AuthenticationBuilder {
     if (errorHandling === undefined) {
       return this._errorHandling;
     }
-    this._errorHandling = errorHandling;
+    this._errorHandling = errorHandling || new AuthErrorHandlingImpl();
     return this;
   }
 

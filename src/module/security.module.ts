@@ -1,9 +1,8 @@
 import { DynamicModule, Logger, Module } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, Reflector } from '@nestjs/core';
 import { SecurityGuard } from '../guard/security.guard';
 import { createLoginController } from '../controller/login.controller';
 import { LoginService } from '../service/login.service';
-import { Reflector } from '@nestjs/core/services/reflector.service';
 import { Provider } from '../core/auth/provider';
 import { createSecurityExceptionFilter } from '../filter/security-exception.filter';
 import { AuthenticateType, AuthenticationProvider } from '../core/auth/abstract/authenticationProvider';
@@ -16,7 +15,7 @@ import {
   SessionAuthenticationProvider,
 } from '../core/auth/impl/sessionAuthenticationProvider';
 import { AuthenticationBuilder } from '../core/auth/authenticationBuilder';
-import { Type } from '@nestjs/common/interfaces/type.interface';
+import { CsrfService } from '../core/http/csrf.service';
 
 @Module({})
 export class SecurityModule {
@@ -29,9 +28,6 @@ export class SecurityModule {
 
   static forRoot(config: SecurityConfig): DynamicModule {
     const controllers = [];
-    const authenticationProvider = config
-      .authenticationBuilder()
-      .authenticationProvider();
 
     const providers: any[] = [
       {
@@ -43,47 +39,66 @@ export class SecurityModule {
         useClass: SecurityGuard,
       },
       {
-        provide: AuthenticationProvider,
-        useValue: authenticationProvider,
-      },
-      {
-        provide: Authenticator,
-        useValue: config.authenticationBuilder().authenticator(),
-      },
-      {
-        provide: AuthErrorHandling,
-        useValue: config.authenticationBuilder().errorHandling(),
-      },
-      {
         provide: HttpSecurity,
         useValue: config.httpSecurity(),
+      }, {
+        provide: AuthErrorHandling,
+        useValue: config.authenticationBuilder().errorHandling(),
       },
       Reflector,
     ];
 
     // @ts-ignore
-    const exports: (string | Type)[] = [];
+    const exports: any[] = [];
 
-    if (
-      authenticationProvider.authenticateType() === AuthenticateType.FORM_LOGIN
-    ) {
-      this.logger.warn(sessionAndFormMessage);
-      // this.logger.warn(`Be sure to set application session. app.use(session({secret: "secret"}));`);
-      const formLogin = (
-        authenticationProvider as SessionAuthenticationProvider
-      ).formLogin();
+    if (config.httpSecurity().csrf().enabled()) {
       providers.push({
-        provide: FormLogin,
-        useValue: formLogin
+        provide: CsrfService,
+        useValue: config.httpSecurity().csrf().build(),
       });
-      if (formLogin.isDefaultEnabled()) {
-        controllers.push(createLoginController(formLogin));
-      }
-      if (formLogin.isLoginService()) {
-        providers.push(LoginService);
-        exports.push(LoginService);
+      exports.push(CsrfService);
+    }
+
+    if (config.authenticationBuilder().authenticator()) {
+      providers.push({
+        provide: Authenticator,
+        useValue: config.authenticationBuilder().authenticator(),
+      });
+      exports.push(Authenticator);
+    }
+
+    const authenticationProvider = config
+      .authenticationBuilder()
+      .authenticationProvider();
+
+    if (authenticationProvider) {
+      providers.push({
+        provide: AuthenticationProvider,
+        useValue: authenticationProvider,
+      });
+      if (
+        authenticationProvider.authenticateType() === AuthenticateType.SESSION
+      ) {
+        this.logger.warn(sessionAndFormMessage);
+        // this.logger.warn(`Be sure to set application session. app.use(session({secret: "secret"}));`);
+        const formLogin = (
+          authenticationProvider as SessionAuthenticationProvider
+        ).formLogin();
+        providers.push({
+          provide: FormLogin,
+          useValue: formLogin,
+        });
+        if (formLogin.isDefaultEnabled()) {
+          controllers.push(createLoginController(formLogin));
+        }
+        if (formLogin.isLoginService()) {
+          providers.push(LoginService);
+          exports.push(LoginService);
+        }
       }
     }
+
+
     return {
       module: SecurityModule,
       providers,
@@ -145,7 +160,6 @@ export class SecurityConfigBuilder {
    * @internal
    */
   constructor() {
-    this._authenticationBuilder.authenticationProvider(this.provider.basicAuthentication());
   }
 
   httpSecurity(): HttpSecurity {

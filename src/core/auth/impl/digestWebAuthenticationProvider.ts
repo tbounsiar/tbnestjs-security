@@ -1,6 +1,6 @@
 import { WebAuthenticationProvider } from './webAuthenticationProvider';
-import { md5 } from '../../utils/crypto-utils';
-import { generate } from '../../utils/utils';
+import { md5 } from '../../utils/crypto.utils';
+import { generate } from '../../utils/crypto.utils';
 import { Authentication } from '../abstract/authentication';
 import { AuthenticateType } from '../abstract/authenticationProvider';
 import { AuthenticationBuilder } from '../authenticationBuilder';

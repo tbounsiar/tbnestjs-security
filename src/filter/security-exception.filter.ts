@@ -8,18 +8,17 @@ export function createSecurityExceptionFilter() {
   class SecurityExceptionFilter implements ExceptionFilter {
     catch(exception: ForbiddenException | UnauthorizedException, host: ArgumentsHost) {
       const ctx = host.switchToHttp();
-      const response = ctx.getResponse<Response>();
+      const response = ctx.getResponse<any>();
       // @ts-ignore
       if (response.finished) {
-        return
+        return;
       }
-      const request = ctx.getRequest<Request>();
+      const request = ctx.getRequest<any>();
       const status = exception.getStatus();
 
       response
-        // @ts-ignore
         .status(status)
-        .json({
+        .send({
           statusCode: status,
           message: exception.message,
           url: request.url,

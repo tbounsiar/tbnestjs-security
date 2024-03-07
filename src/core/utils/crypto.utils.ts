@@ -39,3 +39,13 @@ export function base64Decode(
 ): string {
   return Buffer.from(input, 'base64').toString(encoding);
 }
+
+/**
+ *
+ * @param length
+ */
+export function generate(length: number) {
+// Générer 4 bytes aléatoires
+  const randomBytes = crypto.randomBytes(length);
+  return randomBytes.toString('utf-8');
+}

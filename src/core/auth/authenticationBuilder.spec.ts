@@ -10,8 +10,8 @@ describe('AuthenticationBuilder Test', () => {
     } as AuthErrorHandling;
     const authenticationBuilder = new AuthenticationBuilder(null);
     authenticationBuilder.errorHandling(authErrorHandling);
-    authenticationBuilder.errorHandling().forbidden();
-    authenticationBuilder.errorHandling().unauthorized();
+    authenticationBuilder.errorHandling().forbidden(null);
+    authenticationBuilder.errorHandling().unauthorized(null);
     expect(authErrorHandling.forbidden).toHaveBeenCalledTimes(1);
     expect(authErrorHandling.unauthorized).toHaveBeenCalledTimes(1);
   });

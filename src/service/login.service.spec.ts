@@ -1,5 +1,5 @@
 import { LoginService } from './login.service';
-import * as template from '../core/utils/template';
+import * as template from '../core/utils/template.utils';
 import { RequestAuthenticationProvider } from '../core/auth/abstract/requestAuthenticationProvider';
 import { Authenticator } from '../core/auth/abstract/authenticator';
 import { RequestAuthenticationImpl } from '../core/auth/impl/requestAuthenticationImpl';

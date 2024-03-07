@@ -2,10 +2,10 @@
   "name": "@tbnestjs/security",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "publish/dist/index.js",
+  "types": "publish/dist/index.d.ts",
   "scripts": {
-    "build": "rimraf dist && tsc -w -p tsconfig-build.json",
+    "build": "rimraf dist && tsc -w -p tsconfig.prepublish.json",
     "prepublish": "npm run build",
     "build:publish": "rimraf '../publish/nestjs/security/dist' && tsc -w -p --outDir '../publish/nestjs/security/dist' tsconfig-build.json",
     "npm:build:publish": "npm run build:publish",

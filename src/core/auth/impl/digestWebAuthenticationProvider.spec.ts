@@ -1,9 +1,16 @@
 import { DigestWebAuthenticationProvider } from './digestWebAuthenticationProvider';
-import * as utils from '../../utils/utils';
+import * as crypto from 'crypto';
 import { AuthenticationBuilder } from '../authenticationBuilder';
 import { Authenticator } from '../abstract/authenticator';
 
 describe('DigestWebAuthenticationProvider Test', () => {
+
+  beforeEach(async() => {
+    // @ts-ignore
+    crypto.randomBytes = (length: number) => {
+      return Buffer.from('1234567890');
+    };
+  });
 
   test('Non match authorization throw error', () => {
     const digest = new DigestWebAuthenticationProvider(null);
@@ -16,11 +23,6 @@ describe('DigestWebAuthenticationProvider Test', () => {
   });
 
   test('Old nonce will be removed and match authorization return non authentication', () => {
-    const id = '1234567890';
-    // @ts-ignore
-    utils.generate = (length: number) => {
-      return id;
-    };
     const date = Date.now() - 3600000;
     const oldNow = Date.now;
     Date.now = () => date;
@@ -41,11 +43,6 @@ describe('DigestWebAuthenticationProvider Test', () => {
   });
 
   test('Valid Nonce Will be Created', () => {
-    const id = '1234567890';
-    // @ts-ignore
-    utils.generate = (length: number) => {
-      return id;
-    };
     const authenticator = {
       authenticate: jest.fn(() => undefined),
     } as unknown as Authenticator;
