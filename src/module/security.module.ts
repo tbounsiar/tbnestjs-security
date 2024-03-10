@@ -1,25 +1,24 @@
-import { DynamicModule, Logger, Module } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD, Reflector } from '@nestjs/core';
-import { SecurityGuard } from '../guard/security.guard';
+import { DynamicModule, FactoryProvider, Logger, Module, Type } from '@nestjs/common';
+import { APP_FILTER, Reflector } from '@nestjs/core';
+import { securityGuardProvider } from '../guard/security.guard';
 import { createLoginController } from '../controller/login.controller';
 import { LoginService } from '../service/login.service';
-import { Provider } from '../core/auth/provider';
 import { createSecurityExceptionFilter } from '../filter/security-exception.filter';
-import { AuthenticateType, AuthenticationProvider } from '../core/auth/abstract/authenticationProvider';
+import { HttpSecurity } from '../core/http/http.security';
+import { sessionAndFormMessage } from '../core/auth/impl/session/session.authentication.provider';
+import { AuthenticationBuilder } from '../core/auth/authentication.builder';
+import { CsrfToken } from '../core/http/csrf.token';
+import { createCsrfController } from '../controller/csrf.controller';
+import { MemoryAuthenticator, MemoryStore } from '../core/auth/impl/memory.authenticator';
+import { SessionOptions } from '../core/auth/impl/session/session.options';
+import { authenticationProvider, ProviderOptions } from '../core/auth/abstract/authentication.provider';
 import { Authenticator } from '../core/auth/abstract/authenticator';
-import { AuthErrorHandling } from '../core/auth/abstract/authErrorHandling';
-import { HttpSecurity } from '../core/http/httpSecurity';
-import {
-  FormLogin,
-  sessionAndFormMessage,
-  SessionAuthenticationProvider,
-} from '../core/auth/impl/sessionAuthenticationProvider';
-import { AuthenticationBuilder } from '../core/auth/authenticationBuilder';
-import { CsrfService } from '../core/http/csrf.service';
+import { AuthenticationErrorHandling } from '../core/auth/abstract/authentication-error.handling';
+import { ModuleMetadata } from '@nestjs/common/interfaces/modules/module-metadata.interface';
+import { FormLogin } from '../core/auth/impl/session/form-login';
 
 @Module({})
 export class SecurityModule {
-
   /**
    * @internal
    * @private
@@ -27,90 +26,108 @@ export class SecurityModule {
   private static readonly logger = new Logger(SecurityModule.name);
 
   static forRoot(config: SecurityConfig): DynamicModule {
-    const controllers = [];
+    const metadata = {
+      controllers: config.metadata()?.controllers || [],
+      providers: config.metadata()?.providers || [],
+      exports: config.metadata()?.exports || []
+    };
 
-    const providers: any[] = [
+    metadata.providers.push(
       {
         provide: APP_FILTER,
-        useClass: createSecurityExceptionFilter(),
-      },
-      {
-        provide: APP_GUARD,
-        useClass: SecurityGuard,
+        useClass: createSecurityExceptionFilter()
       },
       {
         provide: HttpSecurity,
-        useValue: config.httpSecurity(),
-      }, {
-        provide: AuthErrorHandling,
-        useValue: config.authenticationBuilder().errorHandling(),
+        useValue: config.httpSecurity()
       },
-      Reflector,
-    ];
+      {
+        provide: AuthenticationErrorHandling,
+        useValue: config.authenticationBuilder().errorHandling()
+      },
+      authenticationProvider,
+      securityGuardProvider,
+      Reflector
+    );
 
-    // @ts-ignore
-    const exports: any[] = [];
-
+    let csrfToken: CsrfToken;
     if (config.httpSecurity().csrf().enabled()) {
-      providers.push({
-        provide: CsrfService,
-        useValue: config.httpSecurity().csrf().build(),
+      csrfToken = config.httpSecurity().csrf().build();
+      metadata.providers.push({
+        provide: CsrfToken,
+        useValue: csrfToken
       });
-      exports.push(CsrfService);
+      metadata.exports.push(CsrfToken);
+      metadata.controllers.push(
+        createCsrfController(config.httpSecurity().csrf())
+      );
+      config.httpSecurity().csrfToken(csrfToken);
     }
 
-    if (config.authenticationBuilder().authenticator()) {
-      providers.push({
-        provide: Authenticator,
-        useValue: config.authenticationBuilder().authenticator(),
-      });
-      exports.push(Authenticator);
+    const authenticator = config.authenticationBuilder().authenticator();
+
+    if (authenticator) {
+      if (authenticator instanceof MemoryStore) {
+        metadata.providers.push({
+          provide: Authenticator,
+          useValue: new MemoryAuthenticator(authenticator)
+        });
+      } else {
+        if ('useFactory' in authenticator) {
+          metadata.providers.push(authenticator);
+        } else {
+          metadata.providers.push({
+            provide: Authenticator,
+            useClass: authenticator as Type<Authenticator>
+          });
+        }
+      }
+      metadata.exports.push(Authenticator);
     }
 
-    const authenticationProvider = config
+    const providerOptions = config
       .authenticationBuilder()
       .authenticationProvider();
 
-    if (authenticationProvider) {
-      providers.push({
-        provide: AuthenticationProvider,
-        useValue: authenticationProvider,
-      });
-      if (
-        authenticationProvider.authenticateType() === AuthenticateType.SESSION
-      ) {
+    if (providerOptions instanceof ProviderOptions) {
+
+      metadata.providers.push(providerOptions.optionProvider());
+
+      if (providerOptions instanceof SessionOptions) {
         this.logger.warn(sessionAndFormMessage);
-        // this.logger.warn(`Be sure to set application session. app.use(session({secret: "secret"}));`);
-        const formLogin = (
-          authenticationProvider as SessionAuthenticationProvider
-        ).formLogin();
-        providers.push({
+        if (csrfToken) {
+          providerOptions.csrfToken(csrfToken);
+        } else {
+          this.logger.warn(
+            'You are using authentication session but CSRF protection is not enabled!'
+          );
+        }
+        const formLogin = providerOptions.formLogin();
+        metadata.providers.push({
           provide: FormLogin,
-          useValue: formLogin,
+          useValue: formLogin
         });
         if (formLogin.isDefaultEnabled()) {
-          controllers.push(createLoginController(formLogin));
+          metadata.controllers.push(createLoginController(formLogin));
         }
         if (formLogin.isLoginService()) {
-          providers.push(LoginService);
-          exports.push(LoginService);
+          metadata.providers.push(LoginService);
+          metadata.exports.push(LoginService);
         }
       }
+      metadata.providers.push(providerOptions.providerProvider());
+      // metadata.exports.push(providerOptions.providerType())
     }
-
 
     return {
       module: SecurityModule,
-      providers,
-      exports,
-      controllers,
-      global: true,
+      ...metadata,
+      global: true
     };
   }
 }
 
 export class SecurityConfig {
-
   /**
    * @internal
    */
@@ -123,6 +140,7 @@ export class SecurityConfig {
      * @internal
      */
     private _authenticationBuilder: AuthenticationBuilder,
+    private _metadata: ModuleMetadata
   ) {
   }
 
@@ -132,6 +150,10 @@ export class SecurityConfig {
 
   authenticationBuilder(): AuthenticationBuilder {
     return this._authenticationBuilder;
+  }
+
+  metadata() {
+    return this._metadata;
   }
 
   static builder(): SecurityConfigBuilder {
@@ -150,11 +172,8 @@ export class SecurityConfigBuilder {
    * @private
    */
   private _authenticationBuilder = new AuthenticationBuilder(this);
-  /**
-   * @internal
-   * @private
-   */
-  private provider = new Provider(this._authenticationBuilder);
+
+  private _metadata: ModuleMetadata;
 
   /**
    * @internal
@@ -170,11 +189,16 @@ export class SecurityConfigBuilder {
     return this._authenticationBuilder;
   }
 
-  provide(): Provider {
-    return this.provider;
+  metadata(metadata: ModuleMetadata) {
+    this._metadata = metadata;
+    return this;
   }
 
   build(): SecurityConfig {
-    return new SecurityConfig(this._httpSecurity, this._authenticationBuilder);
+    return new SecurityConfig(
+      this._httpSecurity,
+      this._authenticationBuilder,
+      this._metadata
+    );
   }
 }

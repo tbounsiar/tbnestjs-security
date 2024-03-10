@@ -318,7 +318,7 @@ customization to fit specific application requirements.
 Example:
 
 ```typescript 
-export class CustomJwtDataExtractor implements JwtDataExtractor {
+export class CustomJwtDataExtractor implements DataExtractor {
 
     getAuthorities(decodedToken: any): string[] {
         // TODO replace the following line depending on your JSON token structure

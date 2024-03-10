@@ -1,4 +1,4 @@
-import { Authentication } from './authentication';
+import { Authentication } from './model/authentication';
 
 /**
  * Interface to implement a new login password authenticator
@@ -11,6 +11,6 @@ export abstract class Authenticator {
    */
   abstract authenticate(
     username: string,
-    password?: string,
-  ): Authentication;
+    password?: string
+  ): Promise<Authentication>;
 }

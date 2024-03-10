@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "examples/session/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "tsConfigPath": "examples/session/tsconfig.app.json"
+  },
+  "generateOptions": {
+    "spec": false
+  },
+  "monorepo": true,
+  "root": "examples/session",
+  "projects": {
+    "session": {
+      "type": "application",
+      "root": "examples/session",
+      "entryFile": "main",
+      "sourceRoot": "examples/session/src",
+      "compilerOptions": {
+        "tsConfigPath": "examples/session/tsconfig.app.json"
+      }
+    }
+  }
+}

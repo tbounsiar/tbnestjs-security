@@ -24,7 +24,10 @@ export function md5(input: string): string {
  * @param input
  * @param encoding
  */
-export function base64Encode(input: string, encoding: BufferEncoding = 'utf-8'): string {
+export function base64Encode(
+  input: string,
+  encoding: BufferEncoding = 'utf-8'
+): string {
   return Buffer.from(input, encoding).toString('base64');
 }
 
@@ -35,7 +38,7 @@ export function base64Encode(input: string, encoding: BufferEncoding = 'utf-8'):
  */
 export function base64Decode(
   input: string,
-  encoding: BufferEncoding = 'utf-8',
+  encoding: BufferEncoding = 'utf-8'
 ): string {
   return Buffer.from(input, 'base64').toString(encoding);
 }
@@ -45,7 +48,7 @@ export function base64Decode(
  * @param length
  */
 export function generate(length: number) {
-// Générer 4 bytes aléatoires
+  // Générer 4 bytes aléatoires
   const randomBytes = crypto.randomBytes(length);
-  return randomBytes.toString('utf-8');
+  return randomBytes.toString('base64');
 }

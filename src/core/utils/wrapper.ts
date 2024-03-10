@@ -2,8 +2,7 @@
  * @internal
  */
 export class Wrapper<O> {
-  constructor(private o: O) {
-  }
+  constructor(private o: O) {}
 
   get(): O {
     return this.o;

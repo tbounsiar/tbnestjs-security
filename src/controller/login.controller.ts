@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Request, Response, Type } from '@nestjs/common';
 import { LoginService } from '../service/login.service';
-import { FormLogin } from '../core/auth/impl/sessionAuthenticationProvider';
+import { FormLogin } from '../core/auth/impl/session/form-login';
 
 /**
  * @internal
@@ -9,15 +9,11 @@ import { FormLogin } from '../core/auth/impl/sessionAuthenticationProvider';
 export const createLoginController = (formLogin: FormLogin): Type<any> => {
   @Controller()
   class LoginController {
-
-    constructor(
-      private loginService: LoginService,
-    ) {
-    }
+    constructor(private loginService: LoginService) {}
 
     @Get(formLogin.loginPage() || FormLogin.DEFAULT_LOGIN_PAGE)
-    page(@Request() request: any, @Response() response: any) {
-      this.loginService.loginPage(request, response);
+    async page(@Request() request: any, @Response() response: any) {
+      await this.loginService.loginPage(request, response);
     }
 
     @Post(formLogin.loginUrl() || FormLogin.DEFAULT_LOGIN_URL)

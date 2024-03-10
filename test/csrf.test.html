@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<div id="message"></div>
+<script type="application/javascript">
+  var getCookies = function(){
+    var pairs = document.cookie.split(";");
+    var cookies = {};
+    for (var i=0; i<pairs.length; i++){
+      var pair = pairs[i].split("=");
+      cookies[(pair[0]+'').trim()] = unescape(pair.slice(1).join('='));
+    }
+    return cookies;
+  }
+  document.addEventListener('DOMContentLoaded', function(event) {
+
+    fetch('http://localhost:3000/').then(response => {
+      const elem = document.getElementById("message");
+      elem.innerHTML = response.text();
+      console.log(response.json());
+      response.headers.forEach(function(val, key) { console.log(key + ' -> ' + val); });
+    });
+  });
+  console.log(getCookies());
+</script>
+</body>
+</html>

@@ -1,4 +1,10 @@
-import { ArgumentsHost, Catch, ExceptionFilter, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  ForbiddenException,
+  UnauthorizedException
+} from '@nestjs/common';
 
 /**
  * @internal
@@ -6,7 +12,10 @@ import { ArgumentsHost, Catch, ExceptionFilter, ForbiddenException, Unauthorized
 export function createSecurityExceptionFilter() {
   @Catch(ForbiddenException, UnauthorizedException)
   class SecurityExceptionFilter implements ExceptionFilter {
-    catch(exception: ForbiddenException | UnauthorizedException, host: ArgumentsHost) {
+    catch(
+      exception: ForbiddenException | UnauthorizedException,
+      host: ArgumentsHost
+    ) {
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<any>();
       // @ts-ignore
@@ -16,15 +25,12 @@ export function createSecurityExceptionFilter() {
       const request = ctx.getRequest<any>();
       const status = exception.getStatus();
 
-      response
-        .status(status)
-        .send({
-          statusCode: status,
-          message: exception.message,
-          url: request.url,
-        });
+      response.status(status).send({
+        statusCode: status,
+        message: exception.message,
+        url: request.url
+      });
     }
-
   }
 
   return SecurityExceptionFilter;

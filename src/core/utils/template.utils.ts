@@ -1,8 +1,9 @@
 /**
  * @internal
  * @param loginUrl
+ * @param error
  */
-export function loginTemplate(loginUrl: string): string {
+export function loginTemplate(loginUrl: string, error = false): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -78,6 +79,14 @@ export function loginTemplate(loginUrl: string): string {
       <h2 class="form-signin-heading">Please login</h2>
       <input type="text" class="form-control" name="login" placeholder="Email Address" required="" autofocus=""  value="john">
       <input type="password" class="form-control" name="password" placeholder="Password" required="" value="passwords">
+      ${
+        error
+          ? `
+      <div class="alert alert-danger" role="alert">
+          Login failed. Please check your username and password.!
+      </div>`
+          : ''
+      }
       <button  class="btn btn-lg btn-primary btn-block" type="submit">Login</button>
     </form>
   </div>
