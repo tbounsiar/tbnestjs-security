@@ -78,16 +78,13 @@ class SecurityGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    if (this.authenticationProvider) {
-      if (this.isLoginForm(context)) {
-        return true;
-      }
-      if (await this.validateMatcher(context)) {
-        return true;
-      }
-      return false;
+    if (this.isLoginForm(context)) {
+      return true;
     }
-    throw this.authErrorHandling.unauthorized(context);
+    if (await this.validateMatcher(context)) {
+      return true;
+    }
+    return false;
   }
 
   private isLoginForm(context: ExecutionContext) {
@@ -136,66 +133,69 @@ class SecurityGuard implements CanActivate {
     context: ExecutionContext,
     expression?: string
   ) {
-    let errorHandler = null;
-    let redirect = null;
-    const request = context.switchToHttp().getRequest();
+    if (this.authenticationProvider) {
+      let errorHandler = null;
+      let redirect = null;
+      const request = context.switchToHttp().getRequest();
 
-    if (this.authenticationProvider instanceof WwwAuthenticationProvider) {
-      errorHandler = (error: any) => {
-        const [key, value] = (
-          this.authenticationProvider as WwwAuthenticationProvider
-        ).getAskHeader(error);
-        const response = context.switchToHttp().getResponse();
-        response.header(key, value);
-      };
-    } else if (this.formLogin) {
-      redirect = () => {
-        const response = context.switchToHttp().getResponse();
-        response
-          .status(302)
-          .redirect(
-            `${this.formLogin.loginPage() || FormLogin.DEFAULT_LOGIN_PAGE}?from=${request.originalUrl}`
-          );
-      };
-    }
+      if (this.authenticationProvider instanceof WwwAuthenticationProvider) {
+        errorHandler = (error: any) => {
+          const [key, value] = (
+            this.authenticationProvider as WwwAuthenticationProvider
+          ).getAskHeader(error);
+          const response = context.switchToHttp().getResponse();
+          response.header(key, value);
+        };
+      } else if (this.formLogin) {
+        redirect = () => {
+          const response = context.switchToHttp().getResponse();
+          response
+            .status(302)
+            .redirect(
+              `${this.formLogin.loginPage() || FormLogin.DEFAULT_LOGIN_PAGE}?from=${request.originalUrl}`
+            );
+        };
+      }
 
-    try {
-      const authentication =
-        await this.authenticationProvider.getAuthentication(request);
-      if (!authentication.isAuthenticated()) {
-        if (redirect) {
-          redirect();
-          return;
+      try {
+        const authentication =
+          await this.authenticationProvider.getAuthentication(request);
+        if (!authentication.isAuthenticated()) {
+          if (redirect) {
+            redirect();
+            return;
+          }
+          // @ref *
+          throw new UnauthorizedException();
         }
-        // @ref *
-        throw new UnauthorizedException();
+        if (
+          this.httpSecurity.csrfToken() &&
+          !this.httpSecurity.csrfToken().check(request)
+        ) {
+          throw new CsrfTokenError('Forbidden: CSRF token does not match');
+        }
+        if (!expression || eval(expression)) {
+          return true;
+        }
+      } catch (error) {
+        if (error instanceof SessionError) {
+          throw error;
+        }
+        if (error instanceof CsrfTokenError) {
+          throw new ForbiddenException(error.message);
+        }
+        // check if throwed ar @ref *
+        const isUnauthorizedException = error instanceof UnauthorizedException;
+        if (errorHandler) {
+          errorHandler(isUnauthorizedException ? undefined : error);
+        }
+        throw isUnauthorizedException
+          ? error
+          : this.authErrorHandling.unauthorized(context);
       }
-      if (
-        this.httpSecurity.csrfToken() &&
-        !this.httpSecurity.csrfToken().check(request)
-      ) {
-        throw new CsrfTokenError('Forbidden: CSRF token does not match');
-      }
-      if (!expression || eval(expression)) {
-        return true;
-      }
-    } catch (error) {
-      if (error instanceof SessionError) {
-        throw error;
-      }
-      if (error instanceof CsrfTokenError) {
-        throw new ForbiddenException(error.message);
-      }
-      // check if throwed ar @ref *
-      const isUnauthorizedException = error instanceof UnauthorizedException;
-      if (errorHandler) {
-        errorHandler(isUnauthorizedException ? undefined : error);
-      }
-      throw isUnauthorizedException
-        ? error
-        : this.authErrorHandling.unauthorized(context);
+      throw this.authErrorHandling.forbidden(context);
     }
-    throw this.authErrorHandling.forbidden(context);
+    throw this.authErrorHandling.unauthorized(context);
   }
 
   private getDecoratorExpression(context: ExecutionContext): string {
