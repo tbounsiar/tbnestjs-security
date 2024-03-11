@@ -1,6 +1,6 @@
 {
   "name": "@tbnestjs/security",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "publish/dist/index.js",
   "types": "publish/dist/index.d.ts",
