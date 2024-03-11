@@ -1,0 +1,1 @@
+Here's an example of implementing session authentication using an authenticator that authenticates users from a database using Prisma:

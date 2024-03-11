@@ -21,8 +21,7 @@ export class AuthenticatorService extends Authenticator {
     password?: string
   ): Promise<Authentication> {
     const user = await this.userService.user({
-      email: username,
-      password
+      email: username
     });
     if (user && user.password === password) {
       // @ts-ignore

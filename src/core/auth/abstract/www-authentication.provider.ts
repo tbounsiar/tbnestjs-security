@@ -71,6 +71,9 @@ export abstract class WwwOptions extends ProviderOptions {
   private _proxy = false;
 
   realm(realm: string): this;
+  /**
+   * @internal
+   */
   realm(): string;
   /**
    * Set WWW-Authenticate realm
@@ -84,6 +87,9 @@ export abstract class WwwOptions extends ProviderOptions {
     return this;
   }
 
+  /**
+   * @internal
+   */
   isProxy(): boolean {
     return this._proxy;
   }

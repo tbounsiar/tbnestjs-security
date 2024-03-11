@@ -2,7 +2,6 @@ import { ProviderOptions } from '../../../src/core/auth/abstract/authentication.
 import {
   AuthorizeRequests,
   DigestAlgorithm,
-  MemoryAuthentication,
   Provider,
   RequestMatcher,
   SecurityConfig,
@@ -24,6 +23,7 @@ import * as session from 'express-session';
 import * as cookieParser from 'cookie-parser';
 import { CookieOptions } from '../../../src/core/http/csrf.token';
 import { SessionOptions } from '../../../src/core/auth/impl/session/session.options';
+import { MemoryAuthentication } from '../../../src';
 
 export interface Form {
   pageUrl?: string;
@@ -67,31 +67,32 @@ export async function buildApp(context: Context, config: AppConfig) {
     builder
       .httpSecurity()
       .authorize(
-        AuthorizeRequests.builder()
+        AuthorizeRequests.with()
           .requestMatcher(
-            RequestMatcher.builder()
-              .requestMatcher('/admin/(.*)')
+            RequestMatcher.match('/admin/(.*)')
               .hasRole('ADMIN')
               .hasAuthority('ADMIN_READ')
           )
           .requestMatcher(
-            RequestMatcher.builder()
-              .requestMatcher('/home')
+            RequestMatcher.match('/home')
               .hasAnyRoles('ADMIN', 'USER')
           )
           .requestMatcher(
-            RequestMatcher.builder()
-              .requestMatcher('/home')
+            RequestMatcher.match('/home')
               .withMethod(RequestMethod.POST)
               .hasAnyAuthorities('POST_HOME')
           )
           .requestMatcher(
-            RequestMatcher.builder().requestMatcher('/permit').permitAll()
+            RequestMatcher.match('/permit').permitAll()
           )
           .requestMatcher(
-            RequestMatcher.builder()
-              .requestMatcher('/permit')
+            RequestMatcher.match('/permit')
               .hasAnyRoles('ADMIN', 'USER')
+          )
+          .requestMatcher(
+            RequestMatcher.match('/permission')
+              .hasPermission('$.hasAnyRoles("ADMIN", "USER")')
+              .hasPermission(authentication => authentication.hasAnyRoles('ADMIN', 'USER'))
           )
       );
     if (config.options?.csrf) {
@@ -132,7 +133,7 @@ export async function buildApp(context: Context, config: AppConfig) {
         authenticationProvider = digestWebAuthenticationProvider;
         break;
       case 'BEARER':
-        authenticationProvider = Provider.jwtTokenAuthentication(
+        authenticationProvider = Provider.jwtTokenAuthentication().secret(
           config.options.secret
         );
         break;

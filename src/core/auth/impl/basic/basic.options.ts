@@ -1,11 +1,9 @@
 import { WwwOptions } from '../../abstract/www-authentication.provider';
-import { Injectable } from '@nestjs/common';
 import { AuthenticationProvider } from '../../abstract/authentication.provider';
 import { BasicWebAuthenticationProvider } from './basic-web-authentication.provider';
 import { FactoryProvider } from '@nestjs/common/interfaces/modules/provider.interface';
 import { Authenticator } from '../../abstract/authenticator';
 
-@Injectable()
 export class BasicOptions extends WwwOptions {
   /**
    * @internal
@@ -13,7 +11,11 @@ export class BasicOptions extends WwwOptions {
    */
   private _charset: BufferEncoding = 'utf-8';
 
+  /**
+   * @internal
+   */
   charset(): BufferEncoding;
+
   charset(charset: BufferEncoding): this;
   /**
    * Set WWW-Authenticate Digest charset
@@ -27,6 +29,9 @@ export class BasicOptions extends WwwOptions {
     return this;
   }
 
+  /**
+   * @internal
+   */
   providerProvider(): FactoryProvider<AuthenticationProvider> {
     return {
       provide: AuthenticationProvider,
@@ -37,6 +42,9 @@ export class BasicOptions extends WwwOptions {
     };
   }
 
+  /**
+   * @internal
+   */
   optionProvider(): FactoryProvider<this> {
     return {
       provide: BasicOptions,

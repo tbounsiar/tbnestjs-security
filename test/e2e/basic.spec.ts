@@ -1,12 +1,11 @@
 import { base64Encode } from '../../src/core/utils/crypto.utils';
 import {
-  BasicWebAuthenticationProvider,
-  DigestWebAuthenticationProvider,
   RequestAuthentication
 } from '../../src';
 // @ts-ignore
 import { admin, buildApp, REALM, superuser, user } from './core/app.config';
 import { Context, doTest } from './core/app.test';
+import { BasicWebAuthenticationProvider } from '../../src/core/auth/impl/basic/basic-web-authentication.provider';
 
 describe('Basic Authentication', () => {
   const context: Context = {
@@ -62,6 +61,7 @@ describe('Basic Authentication', () => {
     });
 
     describe('With USER', () => {
+
       doTest(
         context,
         {
@@ -101,6 +101,35 @@ describe('Basic Authentication', () => {
           forbidden: true
         }
       );
+
+      doTest(
+        context,
+        {
+          url: '/permission',
+          headers: {
+            Authorization: `Basic ${base64Encode(user.join(':'))}`
+          }
+        },
+        {
+          text: 'You Can Get Permission!'
+        }
+      );
+    });
+
+    describe('With User Create', () => {
+      doTest(
+        context,
+        {
+          url: '/create',
+          method: 'post',
+          headers: {
+            Authorization: `Basic ${base64Encode(user.join(':'))}`
+          }
+        },
+        {
+          forbidden: true
+        }
+      );
     });
 
     describe('With SUPER USER', () => {
@@ -115,6 +144,18 @@ describe('Basic Authentication', () => {
         },
         {
           text: 'Welcome Home!'
+        }
+      );
+      doTest(
+        context,
+        {
+          url: '/preauthorize',
+          headers: {
+            Authorization: `Basic ${base64Encode(superuser.join(':'))}`
+          }
+        },
+        {
+          text: 'You Can Get PreAuthorize!'
         }
       );
     });
@@ -177,21 +218,6 @@ describe('Basic Authentication', () => {
         text: 'Welcome Dashboard!'
       },
       'With (ADMIN_READ) Authority'
-    );
-
-    doTest(
-      context,
-      {
-        url: '/create',
-        method: 'post',
-        headers: {
-          Authorization: `Basic ${base64Encode(user.join(':'))}`
-        }
-      },
-      {
-        forbidden: true
-      },
-      'With USER'
     );
 
     doTest(

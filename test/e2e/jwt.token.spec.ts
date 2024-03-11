@@ -77,59 +77,64 @@ describe('Security JWT Authentication Test', () => {
     'Invalid Bearer Token'
   );
 
-  doTest(
-    context,
-    {
-      url: '/',
-      headers: {
-        Authorization: `Bearer ${user}`
-      }
-    },
-    {
-      text: 'Welcome Home!'
-    },
-    'With USER'
-  );
+  describe('With USER', () => {
 
-  doTest(
-    context,
-    {
-      url: '/admin/dashboard',
-      headers: {
-        Authorization: `Bearer ${user}`
+    doTest(
+      context,
+      {
+        url: '/',
+        headers: {
+          Authorization: `Bearer ${user}`
+        }
+      },
+      {
+        text: 'Welcome Home!'
       }
-    },
-    {
-      forbidden: true
-    },
-    'With USER'
-  );
+    );
 
-  doTest(
-    context,
-    {
-      url: '/admin/dashboard',
-      headers: {
-        Authorization: `Bearer ${admin}`
+    doTest(
+      context,
+      {
+        url: '/admin/dashboard',
+        headers: {
+          Authorization: `Bearer ${user}`
+        }
+      },
+      {
+        forbidden: true
       }
-    },
-    {
-      text: 'Welcome Dashboard!'
-    },
-    'With ADMIN'
-  );
+    );
+  });
 
-  doTest(
-    context,
-    {
-      url: '/admin/dashboard',
-      headers: {
-        Authorization: `Bearer ${superuser}`
+  describe('With ADMIN', () => {
+
+    doTest(
+      context,
+      {
+        url: '/admin/dashboard',
+        headers: {
+          Authorization: `Bearer ${admin}`
+        }
+      },
+      {
+        text: 'Welcome Dashboard!'
       }
-    },
-    {
-      text: 'Welcome Dashboard!'
-    },
-    'With SUPER USER'
-  );
+    );
+
+  });
+  describe('With SUPER USER', () => {
+    doTest(
+      context,
+      {
+        url: '/admin/dashboard',
+        headers: {
+          Authorization: `Bearer ${superuser}`
+        }
+      },
+      {
+        text: 'Welcome Dashboard!'
+      }
+    );
+
+  });
 });

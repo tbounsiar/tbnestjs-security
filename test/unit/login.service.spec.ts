@@ -7,7 +7,7 @@ import { FormLogin } from '../../src/core/auth/impl/session/form-login';
 
 describe('LoginPageService Test', () => {
   let authenticator: Authenticator;
-  let authenticationProvider: RequestAuthenticationProvider<any>;
+  let authenticationProvider: RequestAuthenticationProvider;
   let loginPageService: LoginService;
   let response: any;
   let formLogin = FormLogin.new();
@@ -20,7 +20,7 @@ describe('LoginPageService Test', () => {
       ),
       setAuthentication: jest.fn(),
       credentialsExtractor: jest.fn()
-    } as unknown as RequestAuthenticationProvider<any>;
+    } as unknown as RequestAuthenticationProvider;
     loginPageService = new LoginService(
       authenticationProvider,
       authenticator,

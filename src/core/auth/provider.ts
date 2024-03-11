@@ -17,15 +17,8 @@ export class Provider {
     return new DigestOptions();
   }
 
-  static jwtTokenAuthentication(secret: string): JwtTokenOptions {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const jwt = require('jsonwebtoken');
-    if (!jwt) {
-      throw new Error(
-        'Package jsonwebtoken seems not to be installed, please do `npm i -S jsonwebtoken and retry`'
-      );
-    }
-    return new JwtTokenOptions(secret, jwt);
+  static jwtTokenAuthentication(): JwtTokenOptions {
+    return new JwtTokenOptions();
   }
 
   static inMemoryAuthenticator(): MemoryStore {

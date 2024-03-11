@@ -1,6 +1,7 @@
-import { DigestOptions, DigestWebAuthenticationProvider } from '../../src';
 import { Authenticator } from '../../src/core/auth/abstract/authenticator';
 import * as crypto from 'crypto';
+import { DigestOptions } from '../../src/core/auth/impl/digest/digest.options';
+import { DigestWebAuthenticationProvider } from '../../src/core/auth/impl/digest/digest-web-authentication.provider';
 
 describe('DigestWebAuthenticationProvider Test', () => {
   let options: DigestOptions;

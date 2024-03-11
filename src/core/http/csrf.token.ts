@@ -1,33 +1,31 @@
 import { generate } from '../utils/crypto.utils';
 import { HttpSecurity } from './http.security';
-import { Injectable } from '@nestjs/common';
 
 export type RequestCsrfGetter = (request: any) => string;
 
-/**
- * @internal
- */
 export class CsrfToken {
+  /**
+   * @internal
+   */
   static TOKE_NAME = 'x-csrf-token';
-
-  private requestGetters: RequestCsrfGetter[] = [
-    (request) => {
-      return request.cookies[CsrfToken.TOKE_NAME];
-    }
-  ];
 
   /**
    * @internal
    */
   constructor(
+    /**
+     * @internal
+     */
     private readonly sessionKey: string,
-    private cookieOptions: CookieOptions
+    /**
+     * @internal
+     */
+    private cookieOptions: CookieOptions,
+    /**
+     * @internal
+     */
+    private requestGetters: RequestCsrfGetter[]
   ) {}
-
-  addGetter(requestGetter: RequestCsrfGetter): this {
-    this.requestGetters.push(requestGetter);
-    return this;
-  }
 
   /**
    * @internal
@@ -45,6 +43,9 @@ export class CsrfToken {
     return this;
   }
 
+  /**
+   * @internal
+   */
   delete(request: any, response: any) {
     delete request.session[this.sessionKey];
     response.clearCookie(CsrfToken.TOKE_NAME);
@@ -77,7 +78,16 @@ export class CsrfTokenBuilder {
   private disabled: boolean = true;
   private _sessionKey = 'x-csrf-token';
   private _url: string = '/csrf/token';
-  private cookieOptions: CookieOptions = { sameSite: 'Strict' , path: '/'};
+  private cookieOptions: CookieOptions = { sameSite: 'Strict', path: '/' };
+
+  /**
+   * @internal
+   */
+  private requestGetters: RequestCsrfGetter[] = [
+    (request) => {
+      return request.cookies[CsrfToken.TOKE_NAME];
+    }
+  ];
 
   /**
    * @internal
@@ -112,6 +122,11 @@ export class CsrfTokenBuilder {
     return this;
   }
 
+  addGetter(requestGetter: RequestCsrfGetter): this {
+    this.requestGetters.push(requestGetter);
+    return this;
+  }
+
   /**
    * @internal
    */
@@ -132,12 +147,25 @@ export class CsrfTokenBuilder {
    * @internal
    */
   build(): CsrfToken {
-    return new CsrfToken(this._sessionKey, this.cookieOptions);
+    return new CsrfToken(
+      this._sessionKey,
+      this.cookieOptions,
+      this.requestGetters
+    );
   }
 }
 
+/**
+ * @internal
+ */
 export class CsrfTokenError extends Error {}
 
+/**
+ * @internal
+ * @param name
+ * @param value
+ * @param options
+ */
 function generateCookieHeaderValue(
   name: string,
   value: string,

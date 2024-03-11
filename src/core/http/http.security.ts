@@ -5,7 +5,8 @@ import {
 } from './authorize.requests';
 import { SecurityConfigBuilder } from '../../module/security.module';
 import { pathToRegex } from '../utils/regex.utils';
-import { CsrfTokenBuilder, CsrfToken } from './csrf.token';
+import { CsrfTokenBuilder } from './csrf.token';
+import { Permission } from './request.matcher';
 
 export class HttpSecurity {
   /**
@@ -18,11 +19,6 @@ export class HttpSecurity {
    * @private
    */
   private csrfConfig = new CsrfTokenBuilder(this);
-  /**
-   * @internal
-   * @private
-   */
-  private _csrfService: CsrfToken;
 
   /**
    * @internal
@@ -35,13 +31,8 @@ export class HttpSecurity {
     private builder: SecurityConfigBuilder
   ) {}
 
-  authorize(
-    authorizeRequests: AuthorizeRequests | AuthorizeRequestsBuilder
-  ): this {
-    this._authorizeRequests =
-      authorizeRequests instanceof AuthorizeRequests
-        ? authorizeRequests
-        : authorizeRequests.build();
+  authorize(authorizeRequests: AuthorizeRequestsBuilder): this {
+    this._authorizeRequests = authorizeRequests.build();
     return this;
   }
 
@@ -51,20 +42,18 @@ export class HttpSecurity {
    * @param method
    */
   getPermission(path: string, method: RequestMethod) {
+    const permissions: Permission[][] = [];
     if (this._authorizeRequests) {
-      let permissions: Record<number, string[]>;
       const matchers = this._authorizeRequests.matchers();
       for (const regex in matchers) {
         const pathRegex = pathToRegex(regex);
         if (pathRegex.test(path)) {
-          permissions = matchers[regex];
+          const matcher = matchers[regex];
+          permissions.push(matcher[method] || matcher[RequestMethod.ALL]);
         }
       }
-      return permissions
-        ? permissions[method] || permissions[RequestMethod.ALL]
-        : [];
     }
-    return [];
+    return permissions;
   }
 
   and(): SecurityConfigBuilder {
@@ -73,26 +62,5 @@ export class HttpSecurity {
 
   csrf() {
     return this.csrfConfig;
-  }
-
-  /**
-   * @internal
-   */
-  csrfToken(): CsrfToken;
-  /**
-   * @internal
-   * @param csrfService
-   */
-  csrfToken(csrfService: CsrfToken): this;
-  /**
-   * @internal
-   * @param csrfService
-   */
-  csrfToken(csrfService?: CsrfToken): CsrfToken | this {
-    if (csrfService) {
-      this._csrfService = csrfService;
-      return this;
-    }
-    return this._csrfService;
   }
 }

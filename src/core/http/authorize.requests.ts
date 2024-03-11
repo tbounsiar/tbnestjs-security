@@ -1,10 +1,10 @@
-import { RequestMatcher, RequestMatcherBuilder } from './request.matcher';
+import { Permission, RequestMatcher } from './request.matcher';
 
 export class AuthorizeRequests {
   /**
    * @internal
    */
-  private permissions: Record<string, Record<number, string[]>> = {};
+  private permissions: Record<string, Record<number, Permission[]>> = {};
 
   /**
    * @internal
@@ -32,12 +32,12 @@ export class AuthorizeRequests {
     });
   }
 
-  static builder(): AuthorizeRequestsBuilder {
-    return new AuthorizeRequestsBuilder();
+  matchers(): Record<string, Record<number, Permission[]>> {
+    return this.permissions || {};
   }
 
-  matchers(): Record<string, Record<number, string[]>> {
-    return this.permissions || {};
+  static with(): AuthorizeRequestsBuilder {
+    return new AuthorizeRequestsBuilder();
   }
 }
 
@@ -48,17 +48,14 @@ export class AuthorizeRequestsBuilder {
    */
   private requestMatchers: RequestMatcher[] = [];
 
-  requestMatcher(
-    requestMatchers: RequestMatcher | RequestMatcherBuilder
-  ): this {
-    this.requestMatchers.push(
-      requestMatchers instanceof RequestMatcher
-        ? requestMatchers
-        : requestMatchers.build()
-    );
+  requestMatcher(requestMatchers: RequestMatcher): this {
+    this.requestMatchers.push(requestMatchers);
     return this;
   }
 
+  /**
+   * @internal
+   */
   build(): AuthorizeRequests {
     return new AuthorizeRequests(this.requestMatchers);
   }

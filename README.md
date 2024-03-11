@@ -78,8 +78,8 @@ const builder = SecurityConfig.builder();
 
 @Module({
     imports: [SecurityModule.forRoot(builder.build())],
-    controllers: [AppController],
-    providers: [AppService],
+    controllers: [HomeController],
+    providers: [HomeService],
 })
 export class AppModule {
 }

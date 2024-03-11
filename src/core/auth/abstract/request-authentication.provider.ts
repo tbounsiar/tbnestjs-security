@@ -1,18 +1,22 @@
-import { AuthenticationProvider } from './authentication.provider';
+import {
+  AuthenticationProvider,
+  ProviderOptions
+} from './authentication.provider';
 import { Authentication } from './model/authentication';
 
-export abstract class RequestAuthenticationProvider<
-  C
-> extends AuthenticationProvider {
-  /**
-   * @internal
-   * @private
-   */
-  private _credentialsExtractor: CredentialsExtractor<C>;
+/**
+ * Username password object
+ */
+export interface Credentials {
+  username: string;
+  password: string;
+}
 
+export abstract class RequestAuthenticationProvider extends AuthenticationProvider {
   /**
    * Set Authentication to request
    * @param request {any}: The http request
+   * @param response {any}: The http response
    * @param authentication {Authentication}:  the authentication
    */
   abstract setAuthentication(
@@ -20,12 +24,32 @@ export abstract class RequestAuthenticationProvider<
     response: any,
     authentication: Authentication
   ): void;
+}
 
-  credentialsExtractor(): CredentialsExtractor<C>;
-  credentialsExtractor(extractor: CredentialsExtractor<C>): this;
+export abstract class RequestOptions extends ProviderOptions {
+  /**
+   * @internal
+   * @private
+   */
+  private _credentialsExtractor: CredentialsExtractor;
+
+  /**
+   * @internal
+   */
+  credentialsExtractor(): CredentialsExtractor;
+  /**
+   * Set Extractor to extract username and password from request
+   * It used by default LoginService
+   * @param extractor The credentials extractor
+   */
+  credentialsExtractor(extractor: CredentialsExtractor): this;
+  /**
+   * @internal
+   * @param extractor
+   */
   credentialsExtractor(
-    extractor?: CredentialsExtractor<C>
-  ): CredentialsExtractor<C> | this {
+    extractor?: CredentialsExtractor
+  ): CredentialsExtractor | this {
     if (extractor === undefined) {
       return this._credentialsExtractor;
     }
@@ -34,6 +58,7 @@ export abstract class RequestAuthenticationProvider<
   }
 }
 
-export interface CredentialsExtractor<Credentials> {
-  extract(request: any): Credentials;
-}
+/**
+ * Anonymous function to extract login and password from
+ */
+export type CredentialsExtractor = (request: any) => Credentials;

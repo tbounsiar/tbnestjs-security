@@ -1,6 +1,10 @@
-import { DataExtractor } from '../iface/data.extractor';
+import { JwtDataExtractor } from './iface/jwt-data.extractor';
 
-export class JwtDataExtractor implements DataExtractor {
+/**
+ * @internal
+ * Default Jwt data extractor
+ */
+export class JwtDataExtractorImpl implements JwtDataExtractor {
   getAuthorities(decoded: any): string[] {
     return decoded?.claims?.authorities || [];
   }

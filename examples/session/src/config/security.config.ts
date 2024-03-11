@@ -1,23 +1,49 @@
-import { Provider, SecurityConfig } from '../../../../src';
+// import {
+//   AuthorizeRequests,
+//   FormLogin,
+//   Provider,
+//   RequestMatcher,
+//   SecurityConfig,
+//   SecurityModule
+// } from '../../../../src';
+
 import {
-  AuthenticatorService,
-  authenticatorServiceProvider
-} from './service/authenticator.service';
-import { PrismaService } from '../api/dao/prisma.service';
+  AuthorizeRequests,
+  FormLogin,
+  Provider,
+  RequestMatcher,
+  SecurityConfig,
+  SecurityModule
+} from '@tbnestjs/security';
+import { AuthenticatorService } from './service/authenticator.service';
 import { UserService } from '../api/dao/user.service';
+import { PrismaService } from '../api/dao/prisma.service';
 
 const builder = SecurityConfig.builder();
-// builder
-//   .authenticationBuilder()
-//   .authenticationProvider(Provider.sessionAuthentication());
-//
-// builder.authenticationBuilder()
-//   .authenticator(AuthenticatorService);
-//   // .authenticator(authenticatorServiceProvider);
-// builder.httpSecurity().csrf().enable();
-// builder.metadata({
-//   providers: [PrismaService, UserService]
-//   // exports: [PrismaService, UserService]
-// });
+builder.httpSecurity().csrf().enable();
+builder
+  .httpSecurity()
+  .authorize(
+    AuthorizeRequests.with()
+      .requestMatcher(RequestMatcher.match('/admin/(.*)').hasRole('ADMIN'))
+      .requestMatcher(RequestMatcher.anyRequest().hasAnyRoles('ADMIN', 'USER'))
+  );
 
-export const securityConfig = builder.build();
+// builder.authenticationBuilder().authenticator(authenticatorServiceProvider);
+builder.authenticationBuilder().authenticator(AuthenticatorService);
+builder.metadata({
+  providers: [UserService, PrismaService]
+});
+const sessionAuthentication = Provider.sessionAuthentication()
+  .credentialsExtractor((request: any) => {
+    return { username: request.body.email, password: request.body.password };
+  })
+  .formLogin(
+    FormLogin.new()
+      .disableDefault()
+      .loginPage('/custom/login/page')
+      .loginUrl('/custom/login')
+      .logoutUrl('/custom/logout')
+  );
+builder.authenticationBuilder().authenticationProvider(sessionAuthentication);
+export const securityModule = SecurityModule.forRoot(builder);

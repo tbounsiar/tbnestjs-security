@@ -1,12 +1,5 @@
-import {
-  All,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post
-} from '@nestjs/common';
-import { PreAuthorize } from '../../../../src/guard/decorator/pre-authorize.decorator';
+import { All, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { PreAuthorize } from '../../../../src';
 
 @Controller()
 export class HomeController {
@@ -14,6 +7,7 @@ export class HomeController {
   index(): string {
     return 'Welcome Home!';
   }
+
   @Get('/permit')
   permit(): string {
     return 'Welcome Permit!';
@@ -29,5 +23,16 @@ export class HomeController {
   @HttpCode(200)
   create(): string {
     return 'You Can Create!';
+  }
+
+  @Get('/permission')
+  permission() {
+    return 'You Can Get Permission!';
+  }
+
+  @Get('/preauthorize')
+  @PreAuthorize((authentication) => authentication.hasAnyRoles('ADMIN', 'USER'))
+  preauthorize() {
+    return 'You Can Get PreAuthorize!';
   }
 }

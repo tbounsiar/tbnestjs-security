@@ -46,14 +46,14 @@ export class AuthenticationBuilder {
      */
     private builder: SecurityConfigBuilder
   ) {}
-
+  /**
+   * @internal
+   */
   errorHandling(): AuthenticationErrorHandling;
-  errorHandling(
-    errorHandling: AuthenticationErrorHandling
-  ): AuthenticationBuilder;
+  errorHandling(errorHandling: AuthenticationErrorHandling): this;
   errorHandling(
     errorHandling?: AuthenticationErrorHandling
-  ): AuthenticationErrorHandling | AuthenticationBuilder {
+  ): AuthenticationErrorHandling | this {
     if (errorHandling === undefined) {
       return this._errorHandling;
     }
@@ -61,7 +61,9 @@ export class AuthenticationBuilder {
       errorHandling || new AuthenticationErrorHandlingImpl();
     return this;
   }
-
+  /**
+   * @internal
+   */
   authenticationProvider(): AuthenticationProviderType;
   authenticationProvider(
     authenticationProvider: AuthenticationProviderType
@@ -75,7 +77,9 @@ export class AuthenticationBuilder {
     this._authenticationProvider = authenticationProvider;
     return this;
   }
-
+  /**
+   * @internal
+   */
   authenticator(): AuthenticatorType;
   authenticator(authenticator: AuthenticatorType): this;
   authenticator(authenticator?: AuthenticatorType): AuthenticatorType | this {

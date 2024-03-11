@@ -1,32 +1,50 @@
-import { Injectable } from '@nestjs/common';
 import { loginTemplate } from '../core/utils/template.utils';
 import { AuthenticationProvider } from '../core/auth/abstract/authentication.provider';
 import { Authenticator } from '../core/auth/abstract/authenticator';
-import { Credentials, SessionAuthenticationProvider } from '../core/auth/impl/session/session.authentication.provider';
 import { Authentication } from '../core/auth/abstract/model/authentication';
 import { FormLogin } from '../core/auth/impl/session/form-login';
+import {
+  Credentials,
+  CredentialsExtractor,
+  RequestAuthenticationProvider
+} from '../core/auth/abstract/request-authentication.provider';
+import { FactoryProvider } from '@nestjs/common/interfaces/modules/provider.interface';
 
-/**
- * @internal
- */
-@Injectable()
 export class LoginService {
-
-  private readonly sessionAuthenticationProvider: SessionAuthenticationProvider;
-
+  /**
+   * @internal
+   * @param authenticationProvider
+   * @param authenticator
+   * @param formLogin
+   * @param credentialsExtractor
+   */
   constructor(
-    authenticationProvider: AuthenticationProvider,
+    /**
+     * @internal
+     */
+    private readonly authenticationProvider: AuthenticationProvider,
+    /**
+     * @internal
+     */
     private authenticator: Authenticator,
-    private formLogin: FormLogin
-  ) {
-    this.sessionAuthenticationProvider =
-      authenticationProvider as SessionAuthenticationProvider;
-  }
+    /**
+     * @internal
+     */
+    private formLogin: FormLogin,
+    /**
+     * @internal
+     */
+    private credentialsExtractor?: CredentialsExtractor
+  ) {}
 
+  /**
+   * @internal
+   * @param request
+   * @param response
+   */
   async loginPage(request: any, response: any) {
     const requestAuthentication =
-      await this.sessionAuthenticationProvider.getAuthentication(request);
-
+      await this.authenticationProvider.getAuthentication(request);
     if (requestAuthentication.isAuthenticated()) {
       this.redirect(request, response);
     } else {
@@ -44,28 +62,26 @@ export class LoginService {
       username: request.body?.login,
       password: request.body?.password
     };
-    if (this.sessionAuthenticationProvider.credentialsExtractor()) {
-      credentials = this.sessionAuthenticationProvider
-        .credentialsExtractor()
-        .extract(request);
+    if (this.credentialsExtractor) {
+      credentials = this.credentialsExtractor(request);
     }
-    this.authenticator.authenticate(
-      credentials?.username,
-      credentials?.password
-    ).then(authentication => {
-      this.setAuthentication(request, response, authentication);
-    });
+    this.authenticator
+      .authenticate(credentials?.username, credentials?.password)
+      .then((authentication) => {
+        this.setAuthentication(request, response, authentication);
+      });
   }
 
   logout(request: any, response: any) {
-    this.sessionAuthenticationProvider.setAuthentication(
-      request,
-      response,
-      null
-    );
+    (
+      this.authenticationProvider as RequestAuthenticationProvider
+    ).setAuthentication(request, response, null);
     this.redirect(request, response);
   }
 
+  /**
+   * @internal
+   */
   private setAuthentication(
     request: any,
     response: any,
@@ -75,14 +91,15 @@ export class LoginService {
       this.redirect(request, response, true);
       return;
     }
-    this.sessionAuthenticationProvider.setAuthentication(
-      request,
-      response,
-      authentication
-    );
+    (
+      this.authenticationProvider as RequestAuthenticationProvider
+    ).setAuthentication(request, response, authentication);
     this.redirect(request, response);
   }
 
+  /**
+   * @internal
+   */
   private redirect(request: any, response: any, error = false) {
     let redirect = '/';
     if (error) {
@@ -105,3 +122,32 @@ export class LoginService {
     response.status(302).redirect(redirect);
   }
 }
+
+/**
+ * @internal
+ */
+export const loginServiceProvider: FactoryProvider<LoginService> = {
+  provide: LoginService,
+  useFactory: (
+    authenticationProvider: AuthenticationProvider,
+    authenticator: Authenticator,
+    formLogin: FormLogin,
+    credentialsExtractor?: CredentialsExtractor
+  ) => {
+    return new LoginService(
+      authenticationProvider,
+      authenticator,
+      formLogin,
+      credentialsExtractor
+    );
+  },
+  inject: [
+    AuthenticationProvider,
+    Authenticator,
+    FormLogin,
+    {
+      token: 'CREDENTIALS_EXTRACTOR',
+      optional: true
+    }
+  ]
+};

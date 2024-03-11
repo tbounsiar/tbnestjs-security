@@ -36,11 +36,18 @@ export class DigestOptions extends WwwOptions {
     return this;
   }
 
+  /**
+   * @internal
+   */
   isOpaque() {
     return this._opaque;
   }
 
+  /**
+   * @internal
+   */
   domain(): string;
+
   domain(domain: string): this;
   /**
    * Set WWW-Authenticate Digest domain
@@ -54,6 +61,9 @@ export class DigestOptions extends WwwOptions {
     return this;
   }
 
+  /**
+   * @internal
+   */
   algorithm(): DigestAlgorithm;
   algorithm(algorithm: DigestAlgorithm): this;
   /**
@@ -76,10 +86,16 @@ export class DigestOptions extends WwwOptions {
     return this;
   }
 
+  /**
+   * @internal
+   */
   isQop() {
     return this._qop;
   }
 
+  /**
+   * @internal
+   */
   providerProvider(): FactoryProvider<AuthenticationProvider> {
     return {
       provide: AuthenticationProvider,
@@ -90,6 +106,9 @@ export class DigestOptions extends WwwOptions {
     };
   }
 
+  /**
+   * @internal
+   */
   optionProvider(): FactoryProvider<this> {
     return {
       provide: DigestOptions,

@@ -1,7 +1,7 @@
 /**
- * Get Roles And Authorities From Decoded JWT Token
+ * Get User Roles And Authorities From Token
  */
-export interface DataExtractor {
+export interface JwtDataExtractor {
   getUsername(decoded: any): string;
   getAuthorities(decoded: any): string[];
   getRoles(decoded: any): string[];

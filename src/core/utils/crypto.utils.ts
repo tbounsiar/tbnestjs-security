@@ -44,7 +44,7 @@ export function base64Decode(
 }
 
 /**
- *
+ * @internal
  * @param length
  */
 export function generate(length: number) {

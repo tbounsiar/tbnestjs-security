@@ -12,15 +12,22 @@ import {
 } from './decorator/pre-authorize.decorator';
 import { AuthenticationProvider } from '../core/auth/abstract/authentication.provider';
 import { HttpSecurity } from '../core/http/http.security';
-import { RequestMatcher } from '../core/http/request.matcher';
+import {
+  Permission,
+  PermissionFunction,
+  RequestMatcher
+} from '../core/http/request.matcher';
 import { WwwAuthenticationProvider } from '../core/auth/abstract/www-authentication.provider';
 import { pathToRegex } from '../core/utils/regex.utils';
-import { CsrfTokenError } from '../core/http/csrf.token';
+import { CsrfToken, CsrfTokenError } from '../core/http/csrf.token';
 import { AuthenticationErrorHandling } from '../core/auth/abstract/authentication-error.handling';
 import { FormLogin } from '../core/auth/impl/session/form-login';
 import { SessionError } from '../core/auth/impl/session/session.error';
 import { FactoryProvider } from '@nestjs/common/interfaces/modules/provider.interface';
 
+/**
+ * @internal
+ */
 export const securityGuardProvider: FactoryProvider<SecurityGuard> = {
   provide: APP_GUARD,
   useFactory: (
@@ -28,14 +35,16 @@ export const securityGuardProvider: FactoryProvider<SecurityGuard> = {
     httpSecurity: HttpSecurity,
     authErrorHandling: AuthenticationErrorHandling,
     authenticationProvider?: AuthenticationProvider,
-    formLogin?: FormLogin
+    formLogin?: FormLogin,
+    csrfToken?: CsrfToken
   ) => {
     return new SecurityGuard(
       reflector,
       httpSecurity,
       authErrorHandling,
       authenticationProvider,
-      formLogin
+      formLogin,
+      csrfToken
     );
   },
   inject: [
@@ -48,6 +57,10 @@ export const securityGuardProvider: FactoryProvider<SecurityGuard> = {
     },
     {
       token: FormLogin,
+      optional: true
+    },
+    {
+      token: CsrfToken,
       optional: true
     }
   ]
@@ -64,7 +77,8 @@ class SecurityGuard implements CanActivate {
     private readonly httpSecurity: HttpSecurity,
     private readonly authErrorHandling: AuthenticationErrorHandling,
     private readonly authenticationProvider?: AuthenticationProvider,
-    private readonly formLogin?: FormLogin
+    private readonly formLogin?: FormLogin,
+    private readonly csrfToken?: CsrfToken
   ) {
     if (formLogin) {
       const loginUrls = [
@@ -101,37 +115,23 @@ class SecurityGuard implements CanActivate {
     const method = RequestMethod[request.method] as unknown as RequestMethod;
     const path = request.originalUrl;
     const permissions = this.httpSecurity.getPermission(path, method);
+    const permissionsStack = this.buildPermissionStack(context, permissions);
+    if (
+      permissionsStack.length === 1 &&
+      permissionsStack[0] === RequestMatcher.PERMIT_ALL
+    ) {
+      return true;
+    }
 
-    const expressions = [];
-    if (permissions.length > 0) {
-      const permitAll = permissions.find(
-        (permission) => permission === RequestMatcher.PERMIT_ALL
-      );
-      if (permitAll) {
-        return true;
-      }
-      const matchExpression = permissions
-        .map((permission) => `authentication.${permission}`)
-        .join(' || ');
-      expressions.push(matchExpression);
-    }
-    const decoratorExpression = this.getDecoratorExpression(context);
-    if (decoratorExpression) {
-      expressions.push(decoratorExpression);
-    }
-    let expression = undefined;
-    if (expressions.length > 0) {
-      expression =
-        expressions.length > 1
-          ? expressions.map((exp) => `(${exp})`).join(' && ')
-          : expressions[0];
-    }
-    return this.validatePermission(context, expression);
+    return this.validatePermission(
+      context,
+      permissionsStack.length > 0 ? permissionsStack : undefined
+    );
   }
 
   private async validatePermission(
     context: ExecutionContext,
-    expression?: string
+    permissions?: PermissionFunction[]
   ) {
     if (this.authenticationProvider) {
       let errorHandler = null;
@@ -168,13 +168,18 @@ class SecurityGuard implements CanActivate {
           // @ref *
           throw new UnauthorizedException();
         }
-        if (
-          this.httpSecurity.csrfToken() &&
-          !this.httpSecurity.csrfToken().check(request)
-        ) {
+        if (this.csrfToken && !this.csrfToken.check(request)) {
           throw new CsrfTokenError('Forbidden: CSRF token does not match');
         }
-        if (!expression || eval(expression)) {
+        if (!permissions) {
+          return true;
+        }
+        const conditions = [];
+        for (let i = 0; i < permissions.length; i++) {
+          conditions.push(`permissions[${i}](authentication, request)`);
+        }
+        const code = conditions.join(' && ');
+        if (eval(code)) {
           return true;
         }
       } catch (error) {
@@ -198,14 +203,80 @@ class SecurityGuard implements CanActivate {
     throw this.authErrorHandling.unauthorized(context);
   }
 
-  private getDecoratorExpression(context: ExecutionContext): string {
+  private getDecoratorExpression(context: ExecutionContext): Permission {
     const authorization = this.reflector.get(
       PreAuthorize,
       context.getHandler()
     );
     if (authorization) {
-      return getExpression(authorization);
+      if (typeof authorization === 'string') {
+        return getExpression(authorization);
+      }
+      return authorization;
     }
     return undefined;
+  }
+
+  private buildPermissionStack(
+    context: ExecutionContext,
+    permissions: Permission[][]
+  ) {
+    const permissionsStack: PermissionFunction[] = [];
+    const decoratorExpression = this.getDecoratorExpression(context);
+    if (decoratorExpression) {
+      if (typeof decoratorExpression === 'string') {
+        const code = `(authentication, request) => ${decoratorExpression}`;
+        permissionsStack.push(eval(code));
+      } else {
+        permissionsStack.push(decoratorExpression);
+      }
+    }
+    for (const permission of permissions) {
+      const permitAll = permission.findIndex(
+        (p) => p === RequestMatcher.PERMIT_ALL
+      );
+      if (permitAll >= 0) {
+        permissionsStack.push(RequestMatcher.PERMIT_ALL);
+        continue;
+      }
+      const data: {
+        match?: string;
+        functions?: PermissionFunction[];
+      } = {};
+      const matchPermissions = permission.filter((p) => typeof p === 'string');
+      if (matchPermissions.length > 0) {
+        data.match = matchPermissions
+          .map((permission) =>
+            (permission as string).replace(/\$./g, 'authentication.')
+          )
+          .join(' || ');
+      }
+      const functionPermissions = permission.filter(
+        (p) => typeof p === 'function'
+      );
+      if (functionPermissions.length > 0) {
+        data.functions = functionPermissions as PermissionFunction[];
+      }
+
+      permissionsStack.push(this.buildPermissionFunction(data));
+    }
+    return permissionsStack;
+  }
+
+  buildPermissionFunction(data: {
+    match?: string;
+    functions?: PermissionFunction[];
+  }): PermissionFunction {
+    const conditions = [];
+    if (data.match) {
+      conditions.push(data.match);
+    }
+    if (data.functions && data.functions.length > 0) {
+      for (let i = 0; i < data.functions.length; i++) {
+        conditions.push(`data.functions[${i}](authentication, request)`);
+      }
+    }
+    const code = `(authentication, request) => ${conditions.join(' || ')}`;
+    return eval(code);
   }
 }

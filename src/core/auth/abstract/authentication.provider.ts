@@ -13,6 +13,9 @@ export const Authentication = createParamDecorator(() => {
   return wrapper.get() || new RequestAuthenticationImpl();
 });
 
+/**
+ * @internal
+ */
 export const authenticationProvider: FactoryProvider<RequestAuthentication> = {
   provide: RequestAuthentication,
   useFactory: () => {
@@ -25,6 +28,10 @@ export const authenticationProvider: FactoryProvider<RequestAuthentication> = {
  * Interface to implement an Authentication Provider
  */
 export abstract class AuthenticationProvider {
+  /**
+   * @internal
+   * @param request
+   */
   async getAuthentication(request: any): Promise<RequestAuthentication> {
     const authentication = await this.buildAuthentication(request);
     wrapper.set(authentication);
@@ -41,6 +48,9 @@ export abstract class AuthenticationProvider {
   ): Promise<RequestAuthentication>;
 }
 
+/**
+ * @internal
+ */
 export abstract class ProviderOptions {
   abstract providerProvider(): FactoryProvider<AuthenticationProvider>;
 

@@ -1,11 +1,12 @@
 import { Reflector } from '@nestjs/core';
+import { Permission } from '../../core/http/request.matcher';
 
 /**
  * Decorator for specifying a method access-control expression which will be evaluated to decide whether a method invocation is allowed or not.
  * @param {string} authorization: The method access-control expression
  * @constructor
  */
-export const PreAuthorize = Reflector.createDecorator<string>();
+export const PreAuthorize = Reflector.createDecorator<Permission>();
 
 /**
  * @internal

@@ -21,6 +21,7 @@ export interface Options {
 }
 
 /**
+ * @internal
  * Class for WWW-Authenticate Digest implementation
  */
 // @ts-ignore

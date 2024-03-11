@@ -9,7 +9,7 @@ describe('SessionAuthenticationProvider Test', () => {
   const options = new SessionOptions();
 
   test('No Session Configuration', (done) => {
-    const authenticationProvider = new SessionAuthenticationProvider(options);
+    const authenticationProvider = new SessionAuthenticationProvider();
     const request = {};
     expect(() =>
       authenticationProvider.setAuthentication(request, null, null)
@@ -22,7 +22,7 @@ describe('SessionAuthenticationProvider Test', () => {
   });
 
   test('Session Logout', () => {
-    const authenticationProvider = new SessionAuthenticationProvider(options);
+    const authenticationProvider = new SessionAuthenticationProvider();
     const request = { session: { authentication: null } };
     authenticationProvider.setAuthentication(request, null, null);
     expect(request.session.authentication).toBeUndefined();

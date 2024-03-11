@@ -7,6 +7,9 @@ import { RequestAuthenticationImpl } from '../impl/model/request.authentication.
 import { Authenticator } from './authenticator';
 import { RequestAuthentication } from './model/request.authentication';
 
+/**
+ * @internal
+ */
 export abstract class WebAuthenticationProvider extends WwwAuthenticationProvider {
   /**
    * @internal

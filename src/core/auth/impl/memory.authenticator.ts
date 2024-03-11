@@ -1,7 +1,13 @@
 import { Authenticator } from '../abstract/authenticator';
 import { Authentication } from '../abstract/model/authentication';
 
+/**
+ * @internal
+ */
 export class MemoryAuthenticator extends Authenticator {
+  /**
+   * @param options
+   */
   constructor(private options: MemoryStore) {
     super();
   }
@@ -19,6 +25,9 @@ export class MemoryAuthenticator extends Authenticator {
   }
 }
 
+/**
+ * Memory authenticator store
+ */
 export class MemoryStore {
   /**
    * @internal
@@ -35,6 +44,11 @@ export class MemoryStore {
     return this;
   }
 
+  /**
+   * @internal
+   * @param login
+   * @param password
+   */
   getUser(login: string, password?: string) {
     if (login) {
       const user = this.store[login];

@@ -19,11 +19,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/tbounsiar/nestjs.git",
-    "directory": "security"
+    "url": "https://github.com/tbounsiar/tbnestjs-security"
   },
   "bugs": {
-    "url": "https://github.com/tbounsiar/nestjs/issues"
+    "url": "https://github.com/tbounsiar/tbnestjs-security/issues"
   },
   "author": {
     "email": "tbounsiar@gmail.com",
@@ -32,7 +31,7 @@
   },
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
-  "homepage": "https://github.com/tbounsiar/nestjs/tree/master/security#readme",
+  "homepage": "https://github.com/tbounsiar/tbnestjs-security/blob/master/README.md",
   "dependencies": {
     "path-to-regexp": "^6.2.1"
   }

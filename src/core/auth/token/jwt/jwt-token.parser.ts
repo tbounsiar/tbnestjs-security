@@ -1,27 +1,44 @@
 import { TokenParser } from '../iface/token.parser';
-import { RequestAuthentication } from '../../abstract/model/request.authentication';
 import { TokenError } from '../error/token-error';
-import { RequestAuthenticationImpl } from '../../impl/model/request.authentication.impl';
-import { Authentication } from '../../abstract/model/authentication';
-import { DataExtractor } from '../iface/data.extractor';
-import { JwtDataExtractor } from './jwt-data.extractor';
+import { JwtDataExtractor } from './iface/jwt-data.extractor';
+import { JwtDataExtractorImpl } from './jwt-data.extractor.impl';
 import { TokenAuthentication } from '../model/token.authentication';
 import { TokenRequestAuthentication } from '../model/token-request.authentication';
 
 /**
- *
+ * Default Jwt Token Parser
+ * @default
  */
 export class JwtTokenParser implements TokenParser {
   /**
    * @internal
    */
-  private _jwtDataExtractor: DataExtractor = new JwtDataExtractor();
+  private _jwtDataExtractor: JwtDataExtractor = new JwtDataExtractorImpl();
+  /**
+   * @internal
+   */
+  private jwt: any;
 
   constructor(
-    private secret: string,
-    private jwt: any
-  ) {}
+    /**
+     * @internal
+     */
+    private secret: string
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const jwt = require('jsonwebtoken');
+    if (!jwt) {
+      throw new Error(
+        'Package jsonwebtoken seems not to be installed, please do `npm i -S jsonwebtoken and retry`'
+      );
+    }
+    this.jwt = jwt;
+  }
 
+  /**
+   * @internal
+   * @param token
+   */
   parse(token: string): TokenRequestAuthentication {
     if (token == undefined) {
       return new TokenRequestAuthentication();
@@ -42,16 +59,8 @@ export class JwtTokenParser implements TokenParser {
     }
   }
 
-  dataExtractor(jwtAuthorization: DataExtractor): JwtTokenParser;
-  dataExtractor(): DataExtractor;
-
-  dataExtractor(
-    jwtAuthorization?: DataExtractor
-  ): JwtTokenParser | DataExtractor {
-    if (!jwtAuthorization) {
-      return this._jwtDataExtractor;
-    }
-    this._jwtDataExtractor = jwtAuthorization;
+  jwtDataExtractor(jwtDataExtractor: JwtDataExtractor): this {
+    this._jwtDataExtractor = jwtDataExtractor;
     return this;
   }
 }

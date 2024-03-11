@@ -8,6 +8,7 @@ const CREDENTIALS_REGEXP = /^basic\s(.*)/i;
 const USER_PASS_REGEXP = /^([^:]*):(.*)$/;
 
 /**
+ * @internal
  * Class for WWW-Authenticate Basic implementation
  */
 // @ts-ignore
