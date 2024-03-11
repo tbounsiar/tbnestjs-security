@@ -33,6 +33,9 @@ allowing you to secure your web applications quickly and efficiently.
     - [@Authentication](#authentication-1)
     - [@PreAuthorize](#preauthorize)
 - [Tips and Tricks](#tips-and-tricks)
+    - [Authentication Injection](#authentication-injection)
+    - [Custom Authentication Provider](#custom-authentication-provider)
+    - [Custom Authenticator](#custom-authenticator)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
@@ -694,9 +697,9 @@ sophisticated access control rules tailored to your application's requirements.
 
 Here are some helpful tips and tricks for using the security library effectively.
 
-#### RequestAuthentication
+#### Authentication Injection
 
-The RequestAuthentication instance is injected with request scope, enabling its accessibility within any provider or
+The Authentication instance is injected with request scope, enabling its accessibility within any provider or
 component handling the incoming request. This ensures that authentication details are readily available throughout the
 request lifecycle, empowering developers to implement custom logic or perform authentication-related operations
 seamlessly across different parts of their NestJS application.
@@ -707,7 +710,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class RequestService {
-  constructor(private requestAuthentication: RequestAuthentication) {
+  constructor(private authentication: RequestAuthentication) {
   }
 }
 ```
