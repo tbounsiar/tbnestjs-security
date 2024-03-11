@@ -2,7 +2,7 @@ import { WwwOptions } from '../../abstract/www-authentication.provider';
 import { AuthenticationProvider } from '../../abstract/authentication.provider';
 import { DigestWebAuthenticationProvider } from './digest-web-authentication.provider';
 import { FactoryProvider } from '@nestjs/common/interfaces/modules/provider.interface';
-import { Authenticator } from '../../abstract/authenticator';
+import { UserAuthenticator } from '../../abstract/user.authenticator';
 
 export type DigestAlgorithm = 'MD5' | 'MD5-sess';
 
@@ -99,10 +99,13 @@ export class DigestOptions extends WwwOptions {
   providerProvider(): FactoryProvider<AuthenticationProvider> {
     return {
       provide: AuthenticationProvider,
-      useFactory: (authenticator: Authenticator, options: DigestOptions) => {
+      useFactory: (
+        authenticator: UserAuthenticator,
+        options: DigestOptions
+      ) => {
         return new DigestWebAuthenticationProvider(authenticator, options);
       },
-      inject: [Authenticator, DigestOptions]
+      inject: [UserAuthenticator, DigestOptions]
     };
   }
 

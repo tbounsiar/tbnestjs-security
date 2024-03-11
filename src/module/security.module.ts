@@ -19,7 +19,7 @@ import {
   AuthenticationProvider,
   ProviderOptions
 } from '../core/auth/abstract/authentication.provider';
-import { Authenticator } from '../core/auth/abstract/authenticator';
+import { UserAuthenticator } from '../core/auth/abstract/user.authenticator';
 import { AuthenticationErrorHandling } from '../core/auth/abstract/authentication-error.handling';
 import { ModuleMetadata } from '@nestjs/common/interfaces/modules/module-metadata.interface';
 import { FormLogin } from '../core/auth/impl/session/form-login';
@@ -82,7 +82,7 @@ export class SecurityModule {
     if (authenticator) {
       if (authenticator instanceof MemoryStore) {
         metadata.providers.push({
-          provide: Authenticator,
+          provide: UserAuthenticator,
           useValue: new MemoryAuthenticator(authenticator)
         });
       } else {
@@ -90,12 +90,12 @@ export class SecurityModule {
           metadata.providers.push(authenticator);
         } else {
           metadata.providers.push({
-            provide: Authenticator,
-            useClass: authenticator as Type<Authenticator>
+            provide: UserAuthenticator,
+            useClass: authenticator as Type<UserAuthenticator>
           });
         }
       }
-      metadata.exports.push(Authenticator);
+      metadata.exports.push(UserAuthenticator);
     }
 
     const authenticationProvider = config

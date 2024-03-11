@@ -1,7 +1,7 @@
 import { loginTemplate } from '../core/utils/template.utils';
 import { AuthenticationProvider } from '../core/auth/abstract/authentication.provider';
-import { Authenticator } from '../core/auth/abstract/authenticator';
-import { Authentication } from '../core/auth/abstract/model/authentication';
+import { UserAuthenticator } from '../core/auth/abstract/user.authenticator';
+import { UserAuthentication } from '../core/auth/abstract/model/user.authentication';
 import { FormLogin } from '../core/auth/impl/session/form-login';
 import {
   Credentials,
@@ -26,7 +26,7 @@ export class LoginService {
     /**
      * @internal
      */
-    private authenticator: Authenticator,
+    private authenticator: UserAuthenticator,
     /**
      * @internal
      */
@@ -85,7 +85,7 @@ export class LoginService {
   private setAuthentication(
     request: any,
     response: any,
-    authentication: Authentication
+    authentication: UserAuthentication
   ) {
     if (!authentication) {
       this.redirect(request, response, true);
@@ -130,7 +130,7 @@ export const loginServiceProvider: FactoryProvider<LoginService> = {
   provide: LoginService,
   useFactory: (
     authenticationProvider: AuthenticationProvider,
-    authenticator: Authenticator,
+    authenticator: UserAuthenticator,
     formLogin: FormLogin,
     credentialsExtractor?: CredentialsExtractor
   ) => {
@@ -143,7 +143,7 @@ export const loginServiceProvider: FactoryProvider<LoginService> = {
   },
   inject: [
     AuthenticationProvider,
-    Authenticator,
+    UserAuthenticator,
     FormLogin,
     {
       token: 'CREDENTIALS_EXTRACTOR',

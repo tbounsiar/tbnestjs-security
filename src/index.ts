@@ -1,3 +1,4 @@
+export * from './core/auth/abstract/authentication.provider';
 export { RequestAuthenticationProvider } from './core/auth/abstract/request-authentication.provider';
 export { JwtDataExtractor } from './core/auth/token/jwt/iface/jwt-data.extractor';
 export { MemoryAuthentication } from './core/auth/impl/memory.authenticator';
@@ -6,8 +7,8 @@ export { LoginService } from './service/login.service';
 export { PreAuthorize } from './guard/decorator/pre-authorize.decorator';
 export * from './core/auth/impl/memory.authenticator';
 export { DigestAlgorithm } from './core/auth/impl/digest/digest.options';
-export * from './core/auth/abstract/model/authentication';
-export * from './core/auth/abstract/authenticator';
+export * from './core/auth/abstract/model/user.authentication';
+export * from './core/auth/abstract/user.authenticator';
 export * from './core/http/request.matcher';
 export * from './core/http/authorize.requests';
 export * from './core/auth/provider';

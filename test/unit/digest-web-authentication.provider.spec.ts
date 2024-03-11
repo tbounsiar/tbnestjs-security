@@ -1,4 +1,4 @@
-import { Authenticator } from '../../src/core/auth/abstract/authenticator';
+import { UserAuthenticator } from '../../src/core/auth/abstract/user.authenticator';
 import * as crypto from 'crypto';
 import { DigestOptions } from '../../src/core/auth/impl/digest/digest.options';
 import { DigestWebAuthenticationProvider } from '../../src/core/auth/impl/digest/digest-web-authentication.provider';
@@ -37,7 +37,7 @@ describe('DigestWebAuthenticationProvider Test', () => {
     Date.now = () => date;
     const authenticator = {
       authenticate: jest.fn(() => undefined)
-    } as unknown as Authenticator;
+    } as unknown as UserAuthenticator;
     const digest = new DigestWebAuthenticationProvider(authenticator, options);
     digest.getAskHeader();
     Date.now = oldNow;
@@ -55,7 +55,7 @@ describe('DigestWebAuthenticationProvider Test', () => {
   test('Valid Nonce Will be Created', async () => {
     const authenticator = {
       authenticate: jest.fn(() => undefined)
-    } as unknown as Authenticator;
+    } as unknown as UserAuthenticator;
     options.realm('Digest Authentication Test');
 
     const digest = new DigestWebAuthenticationProvider(authenticator, options);

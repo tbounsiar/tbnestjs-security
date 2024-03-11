@@ -35,7 +35,7 @@ allowing you to secure your web applications quickly and efficiently.
 - [Tips and Tricks](#tips-and-tricks)
     - [Authentication Injection](#authentication-injection)
     - [Custom Authentication Provider](#custom-authentication-provider)
-    - [Custom Authenticator](#custom-authenticator)
+    - [Custom User Authenticator](#custom-user-authenticator)
 - [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
@@ -643,7 +643,7 @@ This decorator allows you to access information about the authenticated user, in
 other relevant details.
 
 ```typescript
-import { Controller, Get } from '@tbnestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { Authentication } from '@tbnestjs/security';
 
 @Controller('profile')
@@ -722,11 +722,16 @@ specific requirements. This enables you to integrate various authentication mech
 out-of-the-box, allowing for seamless integration with existing systems or services.
 
 ```typescript
-import { AuthenticationProvider, RequestAuthenticationProvider, SecurityConfig } from '@tbnestjs/security';
+import {
+  AuthenticationProvider,
+  RequestAuthenticationProvider,
+  SecurityConfig,
+  UserAuthentication,
+  PreAuthorize
+} from '@tbnestjs/security';
 import { Controller, Injectable, Param } from '@nestjs/common';
-import { PreAuthorize } from './pre-authorize.decorator';
 
-export interface MyAuthentication extends Authentication {
+export interface MyAuthentication extends UserAuthentication {
   organisations: number[];
 }
 
@@ -793,7 +798,7 @@ builder
   .authenticationProvider(CustomRequestAuthenticationProvider);
 ```
 
-#### Custom Authenticator
+#### Custom User Authenticator
 
 NestJS Security facilitates the implementation of custom authenticators, enabling the expansion of authentication
 capabilities tailored to your application's needs. These authenticators seamlessly integrate various authentication
@@ -827,7 +832,7 @@ export class UserService {
 }
 
 @Injectable()
-export class AuthenticatorService extends Authenticator {
+export class AuthenticatorService extends UserAuthenticator {
   constructor(private userService: UserService) {
     super();
   }

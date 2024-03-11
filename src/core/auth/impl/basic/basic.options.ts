@@ -2,7 +2,7 @@ import { WwwOptions } from '../../abstract/www-authentication.provider';
 import { AuthenticationProvider } from '../../abstract/authentication.provider';
 import { BasicWebAuthenticationProvider } from './basic-web-authentication.provider';
 import { FactoryProvider } from '@nestjs/common/interfaces/modules/provider.interface';
-import { Authenticator } from '../../abstract/authenticator';
+import { UserAuthenticator } from '../../abstract/user.authenticator';
 
 export class BasicOptions extends WwwOptions {
   /**
@@ -35,10 +35,10 @@ export class BasicOptions extends WwwOptions {
   providerProvider(): FactoryProvider<AuthenticationProvider> {
     return {
       provide: AuthenticationProvider,
-      useFactory: (authenticator: Authenticator, options: BasicOptions) => {
+      useFactory: (authenticator: UserAuthenticator, options: BasicOptions) => {
         return new BasicWebAuthenticationProvider(authenticator, options);
       },
-      inject: [Authenticator, BasicOptions]
+      inject: [UserAuthenticator, BasicOptions]
     };
   }
 

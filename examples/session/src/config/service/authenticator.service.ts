@@ -1,17 +1,18 @@
-import { Authentication, Authenticator } from '../../../../../src';
+import { UserAuthentication, UserAuthenticator } from '../../../../../src';
 import { UserService } from '../../api/dao/user.service';
 import { FactoryProvider, Injectable } from '@nestjs/common';
 
-export const authenticatorServiceProvider: FactoryProvider<Authenticator> = {
-  provide: Authenticator,
-  useFactory: (userService: UserService) => {
-    return new AuthenticatorService(userService);
-  },
-  inject: [UserService]
-};
+export const authenticatorServiceProvider: FactoryProvider<UserAuthenticator> =
+  {
+    provide: UserAuthenticator,
+    useFactory: (userService: UserService) => {
+      return new AuthenticatorService(userService);
+    },
+    inject: [UserService]
+  };
 
 @Injectable()
-export class AuthenticatorService extends Authenticator {
+export class AuthenticatorService extends UserAuthenticator {
   constructor(private userService: UserService) {
     super();
   }
@@ -19,7 +20,7 @@ export class AuthenticatorService extends Authenticator {
   async authenticate(
     username: string,
     password?: string
-  ): Promise<Authentication> {
+  ): Promise<UserAuthentication> {
     const user = await this.userService.user({
       email: username
     });

@@ -1,10 +1,10 @@
-import { Authenticator } from '../abstract/authenticator';
-import { Authentication } from '../abstract/model/authentication';
+import { UserAuthenticator } from '../abstract/user.authenticator';
+import { UserAuthentication } from '../abstract/model/user.authentication';
 
 /**
  * @internal
  */
-export class MemoryAuthenticator extends Authenticator {
+export class MemoryAuthenticator extends UserAuthenticator {
   /**
    * @param options
    */
@@ -60,7 +60,7 @@ export class MemoryStore {
   }
 }
 
-export class MemoryAuthentication implements Authentication {
+export class MemoryAuthentication implements UserAuthentication {
   /**
    * @internal
    * @private

@@ -1,8 +1,8 @@
 import { base64Decode } from '../../../utils/crypto.utils';
 import { WebAuthenticationProvider } from '../../abstract/web-authentication.provider';
-import { Authenticator } from '../../abstract/authenticator';
+import { UserAuthenticator } from '../../abstract/user.authenticator';
 import { BasicOptions } from './basic.options';
-import { Authentication } from '../../abstract/model/authentication';
+import { UserAuthentication } from '../../abstract/model/user.authentication';
 
 const CREDENTIALS_REGEXP = /^basic\s(.*)/i;
 const USER_PASS_REGEXP = /^([^:]*):(.*)$/;
@@ -19,7 +19,7 @@ export class BasicWebAuthenticationProvider extends WebAuthenticationProvider {
    * @param options
    */
   constructor(
-    authenticator: Authenticator,
+    authenticator: UserAuthenticator,
     private options: BasicOptions
   ) {
     super(authenticator, CREDENTIALS_REGEXP, options);
@@ -39,7 +39,7 @@ export class BasicWebAuthenticationProvider extends WebAuthenticationProvider {
    */
   protected async parse(
     authorization: RegExpExecArray
-  ): Promise<Authentication> {
+  ): Promise<UserAuthentication> {
     // decode user pass
     const userPassword = USER_PASS_REGEXP.exec(
       base64Decode(authorization[1], this.options.charset())

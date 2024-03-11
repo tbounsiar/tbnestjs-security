@@ -1,19 +1,19 @@
 import { LoginService } from '../../src/service/login.service';
 import * as template from '../../src/core/utils/template.utils';
 import { RequestAuthenticationProvider } from '../../src/core/auth/abstract/request-authentication.provider';
-import { Authenticator } from '../../src';
+import { UserAuthenticator } from '../../src';
 import { RequestAuthenticationImpl } from '../../src/core/auth/impl/model/request.authentication.impl';
 import { FormLogin } from '../../src/core/auth/impl/session/form-login';
 
 describe('LoginPageService Test', () => {
-  let authenticator: Authenticator;
+  let authenticator: UserAuthenticator;
   let authenticationProvider: RequestAuthenticationProvider;
   let loginPageService: LoginService;
   let response: any;
   let formLogin = FormLogin.new();
 
   beforeEach(async () => {
-    authenticator = {} as Authenticator;
+    authenticator = {} as UserAuthenticator;
     authenticationProvider = {
       getAuthentication: jest.fn(
         (request: any) => new RequestAuthenticationImpl(request.authentication)

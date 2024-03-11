@@ -7,7 +7,7 @@ import { AuthenticationErrorHandlingImpl } from './impl/error/authentication-err
 import { SecurityConfigBuilder } from '../../module/security.module';
 import { MemoryStore } from './impl/memory.authenticator';
 import { FactoryProvider, Type } from '@nestjs/common';
-import { Authenticator } from './abstract/authenticator';
+import { UserAuthenticator } from './abstract/user.authenticator';
 
 type AuthenticationProviderType =
   | ProviderOptions
@@ -16,8 +16,8 @@ type AuthenticationProviderType =
 
 type AuthenticatorType =
   | MemoryStore
-  | FactoryProvider<Authenticator>
-  | Type<Authenticator>;
+  | FactoryProvider<UserAuthenticator>
+  | Type<UserAuthenticator>;
 
 export class AuthenticationBuilder {
   /**

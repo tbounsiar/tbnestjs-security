@@ -1,8 +1,8 @@
 import { WebAuthenticationProvider } from '../../abstract/web-authentication.provider';
 import { generate, md5 } from '../../../utils/crypto.utils';
-import { Authenticator } from '../../abstract/authenticator';
+import { UserAuthenticator } from '../../abstract/user.authenticator';
 import { DigestAlgorithm, DigestOptions } from './digest.options';
-import { Authentication } from '../../abstract/model/authentication';
+import { UserAuthentication } from '../../abstract/model/user.authentication';
 
 const CREDENTIALS_REGEXP = /^digest\s(.*)/i;
 const PARAMS_SPLITER_REGEXP = /,(?=(?:[^"]|"[^"]*")*$)/;
@@ -43,7 +43,7 @@ export class DigestWebAuthenticationProvider extends WebAuthenticationProvider {
    * @param options
    */
   constructor(
-    authenticator: Authenticator,
+    authenticator: UserAuthenticator,
     private options: DigestOptions
   ) {
     super(authenticator, CREDENTIALS_REGEXP, options);
@@ -56,7 +56,7 @@ export class DigestWebAuthenticationProvider extends WebAuthenticationProvider {
   protected async parse(
     authorization: RegExpExecArray,
     request: any
-  ): Promise<Authentication> {
+  ): Promise<UserAuthentication> {
     const params = authorization[1];
     // Split the parameters by comma.
     const tokens = params.split(PARAMS_SPLITER_REGEXP);
@@ -90,7 +90,7 @@ export class DigestWebAuthenticationProvider extends WebAuthenticationProvider {
     username: string,
     ha2: string,
     options: Options
-  ): Promise<Authentication> {
+  ): Promise<UserAuthentication> {
     const user = await this.authenticator.authenticate(username);
     if (user) {
       let ha1 = md5(

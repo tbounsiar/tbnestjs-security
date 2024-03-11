@@ -2,7 +2,7 @@ import {
   AuthenticationProvider,
   ProviderOptions
 } from './authentication.provider';
-import { Authentication } from './model/authentication';
+import { UserAuthentication } from './model/user.authentication';
 
 /**
  * Username password object
@@ -17,12 +17,12 @@ export abstract class RequestAuthenticationProvider extends AuthenticationProvid
    * Set Authentication to request
    * @param request {any}: The http request
    * @param response {any}: The http response
-   * @param authentication {Authentication}:  the authentication
+   * @param authentication {UserAuthentication}:  the authentication
    */
   abstract setAuthentication(
     request: any,
     response: any,
-    authentication: Authentication
+    authentication: UserAuthentication
   ): void;
 }
 

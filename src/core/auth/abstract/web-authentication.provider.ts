@@ -1,10 +1,10 @@
-import { Authentication } from './model/authentication';
+import { UserAuthentication } from './model/user.authentication';
 import {
   WwwAuthenticationProvider,
   WwwOptions
 } from './www-authentication.provider';
 import { RequestAuthenticationImpl } from '../impl/model/request.authentication.impl';
-import { Authenticator } from './authenticator';
+import { UserAuthenticator } from './user.authenticator';
 import { RequestAuthentication } from './model/request.authentication';
 
 /**
@@ -15,7 +15,7 @@ export abstract class WebAuthenticationProvider extends WwwAuthenticationProvide
    * @internal
    */
   protected constructor(
-    protected authenticator: Authenticator,
+    protected authenticator: UserAuthenticator,
     authorizationRegExp: RegExp,
     options: WwwOptions
   ) {
@@ -39,7 +39,9 @@ export abstract class WebAuthenticationProvider extends WwwAuthenticationProvide
    * @param request
    * @private
    */
-  private async getUserAuthentication(request: any): Promise<Authentication> {
+  private async getUserAuthentication(
+    request: any
+  ): Promise<UserAuthentication> {
     const authorization = this.getAuthorization(request);
     if (!authorization) {
       return undefined;
@@ -53,5 +55,5 @@ export abstract class WebAuthenticationProvider extends WwwAuthenticationProvide
   protected abstract parse(
     authorization: RegExpExecArray,
     request?: any
-  ): Promise<Authentication>;
+  ): Promise<UserAuthentication>;
 }

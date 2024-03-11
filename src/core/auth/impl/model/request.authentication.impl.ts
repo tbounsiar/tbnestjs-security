@@ -1,10 +1,10 @@
 import { RequestAuthentication } from '../../abstract/model/request.authentication';
-import { Authentication } from '../../abstract/model/authentication';
+import { UserAuthentication } from '../../abstract/model/user.authentication';
 
 /**
  * @internal
  */
-export class RequestAuthenticationImpl<A extends Authentication>
+export class RequestAuthenticationImpl<A extends UserAuthentication>
   implements RequestAuthentication
 {
   private roles: string[] = [];

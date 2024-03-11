@@ -2,7 +2,7 @@ import { RequestAuthenticationImpl } from '../model/request.authentication.impl'
 import { RequestAuthenticationProvider } from '../../abstract/request-authentication.provider';
 import { CsrfToken } from '../../../http/csrf.token';
 import { SessionError } from './session.error';
-import { Authentication } from '../../abstract/model/authentication';
+import { UserAuthentication } from '../../abstract/model/user.authentication';
 
 /**
  * @internal
@@ -19,7 +19,7 @@ export class SessionAuthenticationProvider extends RequestAuthenticationProvider
 
   protected async buildAuthentication(
     request: any
-  ): Promise<RequestAuthenticationImpl<Authentication>> {
+  ): Promise<RequestAuthenticationImpl<UserAuthentication>> {
     if (!request.session) {
       throw new SessionError(sessionAndFormMessage);
     }
@@ -29,7 +29,7 @@ export class SessionAuthenticationProvider extends RequestAuthenticationProvider
   setAuthentication(
     request: any,
     response: any,
-    authentication: Authentication
+    authentication: UserAuthentication
   ) {
     if (!request.session) {
       throw new Error(sessionAndFormMessage);
