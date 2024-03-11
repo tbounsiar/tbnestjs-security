@@ -15,10 +15,10 @@ export class SessionOptions extends RequestOptions {
    */
   private _formLogin = FormLogin.new();
 
+  formLogin(): FormLogin;
   /**
    * @internal
    */
-  formLogin(): FormLogin;
   formLogin(formLogin: FormLogin): this;
   formLogin(formLogin?: FormLogin): FormLogin | this {
     if (formLogin === undefined) {

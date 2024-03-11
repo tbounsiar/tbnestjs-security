@@ -16,13 +16,14 @@ export const Authentication = createParamDecorator(() => {
 /**
  * @internal
  */
-export const authenticationProvider: FactoryProvider<RequestAuthentication> = {
-  provide: RequestAuthentication,
-  useFactory: () => {
-    return wrapper.get() || new RequestAuthenticationImpl();
-  },
-  scope: Scope.REQUEST
-};
+export const authenticationFactoryProvider: FactoryProvider<RequestAuthentication> =
+  {
+    provide: RequestAuthentication,
+    useFactory: () => {
+      return wrapper.get() || new RequestAuthenticationImpl();
+    },
+    scope: Scope.REQUEST
+  };
 
 /**
  * Interface to implement an Authentication Provider

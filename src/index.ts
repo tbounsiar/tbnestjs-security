@@ -1,3 +1,6 @@
+export { RequestAuthenticationProvider } from './core/auth/abstract/request-authentication.provider';
+export { JwtDataExtractor } from './core/auth/token/jwt/iface/jwt-data.extractor';
+export { MemoryAuthentication } from './core/auth/impl/memory.authenticator';
 export { FormLogin } from './core/auth/impl/session/form-login';
 export { LoginService } from './service/login.service';
 export { PreAuthorize } from './guard/decorator/pre-authorize.decorator';

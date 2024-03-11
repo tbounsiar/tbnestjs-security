@@ -15,14 +15,14 @@ import {
 } from '../core/auth/impl/memory.authenticator';
 import { SessionOptions } from '../core/auth/impl/session/session.options';
 import {
-  authenticationProvider,
+  authenticationFactoryProvider,
+  AuthenticationProvider,
   ProviderOptions
 } from '../core/auth/abstract/authentication.provider';
 import { Authenticator } from '../core/auth/abstract/authenticator';
 import { AuthenticationErrorHandling } from '../core/auth/abstract/authentication-error.handling';
 import { ModuleMetadata } from '@nestjs/common/interfaces/modules/module-metadata.interface';
 import { FormLogin } from '../core/auth/impl/session/form-login';
-import { CredentialsExtractor } from '../core/auth/abstract/request-authentication.provider';
 
 @Module({})
 export class SecurityModule {
@@ -57,10 +57,12 @@ export class SecurityModule {
         provide: AuthenticationErrorHandling,
         useValue: config.authenticationBuilder().errorHandling()
       },
-      authenticationProvider,
+      authenticationFactoryProvider,
       securityGuardProvider,
       Reflector
     );
+
+    metadata.exports.push(authenticationFactoryProvider);
 
     let csrfToken: CsrfToken;
     if (config.httpSecurity().csrf().enabled()) {
@@ -96,43 +98,52 @@ export class SecurityModule {
       metadata.exports.push(Authenticator);
     }
 
-    const providerOptions = config
+    const authenticationProvider = config
       .authenticationBuilder()
       .authenticationProvider();
-
-    if (providerOptions instanceof ProviderOptions) {
-      if (providerOptions instanceof SessionOptions) {
-        this.logger.warn(sessionAndFormMessage);
-        if (!csrfToken) {
-          this.logger.warn(
-            'You are using authentication session but CSRF protection is not enabled!'
-          );
-        }
-        const formLogin = providerOptions.formLogin();
-        metadata.providers.push({
-          provide: FormLogin,
-          useValue: formLogin
-        });
-        if (formLogin.isDefaultEnabled()) {
-          metadata.controllers.push(createLoginController(formLogin));
-        }
-        if (formLogin.isLoginService()) {
-          if (providerOptions.credentialsExtractor()) {
-            metadata.providers.push({
-              provide: 'CREDENTIALS_EXTRACTOR',
-              useValue: providerOptions.credentialsExtractor()
-            });
+    if (authenticationProvider) {
+      if (authenticationProvider instanceof ProviderOptions) {
+        if (authenticationProvider instanceof SessionOptions) {
+          this.logger.warn(sessionAndFormMessage);
+          if (!csrfToken) {
+            this.logger.warn(
+              'You are using authentication session but CSRF protection is not enabled!'
+            );
           }
-          metadata.providers.push(loginServiceProvider);
-          metadata.exports.push(LoginService);
+          const formLogin = authenticationProvider.formLogin();
+          metadata.providers.push({
+            provide: FormLogin,
+            useValue: formLogin
+          });
+          if (formLogin.isDefaultEnabled()) {
+            metadata.controllers.push(createLoginController(formLogin));
+          }
+          if (formLogin.isLoginService()) {
+            if (authenticationProvider.credentialsExtractor()) {
+              metadata.providers.push({
+                provide: 'CREDENTIALS_EXTRACTOR',
+                useValue: authenticationProvider.credentialsExtractor()
+              });
+            }
+            metadata.providers.push(loginServiceProvider);
+            metadata.exports.push(LoginService);
+          }
+        } else {
+          metadata.providers.push(authenticationProvider.optionProvider());
         }
+        metadata.providers.push(authenticationProvider.providerProvider());
+        // metadata.exports.push(providerOptions.providerType())
       } else {
-        metadata.providers.push(providerOptions.optionProvider());
+        if ('useFactory' in authenticationProvider) {
+          metadata.providers.push(authenticationProvider);
+        } else {
+          metadata.providers.push({
+            provide: AuthenticationProvider,
+            useClass: authenticationProvider as Type<AuthenticationProvider>
+          });
+        }
       }
-      metadata.providers.push(providerOptions.providerProvider());
-      // metadata.exports.push(providerOptions.providerType())
     }
-
     return {
       module: SecurityModule,
       ...metadata,

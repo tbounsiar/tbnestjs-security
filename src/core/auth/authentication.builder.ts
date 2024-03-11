@@ -11,6 +11,7 @@ import { Authenticator } from './abstract/authenticator';
 
 type AuthenticationProviderType =
   | ProviderOptions
+  | FactoryProvider<AuthenticationProvider>
   | Type<AuthenticationProvider>;
 
 type AuthenticatorType =

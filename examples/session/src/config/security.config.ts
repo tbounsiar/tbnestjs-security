@@ -9,7 +9,6 @@
 
 import {
   AuthorizeRequests,
-  FormLogin,
   Provider,
   RequestMatcher,
   SecurityConfig,
@@ -34,16 +33,15 @@ builder.authenticationBuilder().authenticator(AuthenticatorService);
 builder.metadata({
   providers: [UserService, PrismaService]
 });
-const sessionAuthentication = Provider.sessionAuthentication()
-  .credentialsExtractor((request: any) => {
+const sessionAuthentication =
+  Provider.sessionAuthentication().credentialsExtractor((request: any) => {
     return { username: request.body.email, password: request.body.password };
-  })
-  .formLogin(
-    FormLogin.new()
-      .disableDefault()
-      .loginPage('/custom/login/page')
-      .loginUrl('/custom/login')
-      .logoutUrl('/custom/logout')
-  );
+  });
+sessionAuthentication
+  .formLogin()
+  .disableDefault()
+  .loginPage('/custom/login/page')
+  .loginUrl('/custom/login')
+  .logoutUrl('/custom/logout');
 builder.authenticationBuilder().authenticationProvider(sessionAuthentication);
 export const securityModule = SecurityModule.forRoot(builder);

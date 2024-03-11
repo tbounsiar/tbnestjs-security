@@ -1,5 +1,5 @@
 import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
-import { PreAuthorize } from '../../../../src/guard/decorator/pre-authorize.decorator';
+import { PreAuthorize } from '../../../../src';
 
 @Controller('/admin')
 export class AdminController {
