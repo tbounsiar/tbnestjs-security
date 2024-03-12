@@ -35,6 +35,10 @@ export class FormLogin {
    */
   private defaultEnabled = true;
 
+  /**
+   * @internal
+   * @private
+   */
   private loginService = true;
 
   /**
@@ -42,6 +46,9 @@ export class FormLogin {
    */
   private constructor() {}
 
+  /**
+   * @internal
+   */
   static new() {
     return new this();
   }
@@ -110,6 +117,9 @@ export class FormLogin {
     return this;
   }
 
+  /**
+   * @internal
+   */
   isLoginService(): boolean {
     return this.loginService;
   }

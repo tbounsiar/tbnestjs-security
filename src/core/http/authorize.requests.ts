@@ -32,6 +32,9 @@ export class AuthorizeRequests {
     });
   }
 
+  /**
+   * @internal
+   */
   matchers(): Record<string, Record<number, Permission[]>> {
     return this.permissions || {};
   }

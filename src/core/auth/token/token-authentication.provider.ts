@@ -22,7 +22,12 @@ export class TokenAuthenticationProvider extends WwwAuthenticationProvider {
   /**
    * @internal
    */
-  constructor(private options: WwwOptions) {
+  constructor(
+    /**
+     * @internal
+     */
+    private options: WwwOptions
+  ) {
     super(CREDENTIALS_REGEXP, options);
   }
 

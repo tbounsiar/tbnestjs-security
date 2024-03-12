@@ -75,9 +75,21 @@ export class CsrfToken {
 }
 
 export class CsrfTokenBuilder {
+  /**
+   * @internal
+   */
   private disabled: boolean = true;
+  /**
+   * @internal
+   */
   private _sessionKey = 'x-csrf-token';
+  /**
+   * @internal
+   */
   private _url: string = '/csrf/token';
+  /**
+   * @internal
+   */
   private cookieOptions: CookieOptions = { sameSite: 'Strict', path: '/' };
 
   /**
@@ -93,7 +105,12 @@ export class CsrfTokenBuilder {
    * @internal
    * @param httpSecurity
    */
-  constructor(private readonly httpSecurity: HttpSecurity) {}
+  constructor(
+    /**
+     * @internal
+     */
+    private readonly httpSecurity: HttpSecurity
+  ) {}
 
   sessionKey(key: string): this {
     if (typeof key === 'string' && key.length > 0) {
