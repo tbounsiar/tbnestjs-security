@@ -1,6 +1,3 @@
-/**
- * @internal
- */
 export class FormLogin {
   /**
    * @internal

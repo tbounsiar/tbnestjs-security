@@ -1,6 +1,6 @@
 {
   "name": "@tbnestjs/security",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Security library for NestJS Framework inspired by Spring Security",
   "license": "MIT",
   "keywords": [
@@ -12,6 +12,7 @@
     "spring-security",
     "authetication",
     "decorator",
+    "RBAC",
     "annotation",
     "roles",
     "authorities",

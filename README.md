@@ -219,7 +219,7 @@ builder
   );
 ```
 
-> **_NOTE:_** In this example, we utilize builder.provide().inMemoryAuthenticator() as the authenticator to authenticate
+> **_NOTE:_** In this example, we utilize `Provider.inMemoryAuthenticator()` as the authenticator to authenticate
 > a user with a login and a password.
 > This setup is suitable for testing purposes only. In later sections, we will explore how to integrate with databases
 > or
@@ -274,7 +274,7 @@ builder
 JWT (JSON Web Token) Authentication is a stateless authentication mechanism where tokens containing user information are
 sent with each request. This allows for scalable and efficient authentication in distributed systems.
 
-> **Warning**
+> **_WARNING_**
 > Default JWT Authentication relies on the `jsonwebtoken` library, which is not installed by default.
 > You need to run `npm install jsonwebtoken` to install it before using JWT authentication in your NestJS application.
 
@@ -383,12 +383,12 @@ user. It typically involves using session cookies to identify authenticated user
 By default, this library provides a built-in authentication form for session-based authentication. However, you have the
 flexibility to disable this default form and use your own custom authentication form if needed.
 
-> **_Warning_**
+> **_WARNING_**
 > Before starting, you need to configure the session mechanism for your application.
 > Please refer to [the official documentation](https://docs.nestjs.com/techniques/session) for detailed instructions on
 > configuring sessions.
 
-> **_Danger_**
+> **_DANGER_**
 > CSRF Vulnerability with Session Authentication
 >
 > Before using session authentication, please note that it is vulnerable to CSRF (Cross-Site Request Forgery) attacks.
@@ -468,7 +468,9 @@ builder
       .requestMatcher(
         RequestMatcher.match('/admin/*)').hasRole('ADMIN')
       )
-  );
+  )
+  // Enable CSRF TOKEN
+  .csrf().enable();
 
 builder
   .authenticationBuilder()
@@ -627,7 +629,7 @@ sessionAuthentication
   .logoutUrl('/my/custom/logout');
 ```
 
-> **_Note:_** It's important to define `loginPage`, `loginUrl`, and `logoutUrl` to ensure that these endpoints are
+> **_NOTE:_** It's important to define `loginPage`, `loginUrl`, and `logoutUrl` to ensure that these endpoints are
 > authorized by the HTTP security configuration.
 
 ### Decorators
@@ -663,7 +665,7 @@ decorator integrates with the guard system in NestJS, allowing you to specify fi
 user roles, authorities, or other conditions.
 
 ```typescript
-import { Controller, Get } from '@tbnestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { PreAuthorize } from '@tbnestjs/security';
 
 @Controller('admin')
